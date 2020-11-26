@@ -84,7 +84,7 @@ PandarGeneral_Internal::PandarGeneral_Internal(
     std::string device_ip, uint16_t lidar_port, uint16_t gps_port,
     boost::function<void(boost::shared_ptr<PPointCloud>, double, hesai_lidar::PandarScanPtr)> pcl_callback,
     boost::function<void(double)> gps_callback, uint16_t start_angle, int tz,
-    int pcl_type, std::string frame_id, std::string timestampType) {
+    int pcl_type, std::string model, std::string frame_id, std::string timestampType) {
       // LOG_FUNC();
   pthread_mutex_init(&lidar_lock_, NULL);
   sem_init(&lidar_sem_, 0, 0);
@@ -102,6 +102,7 @@ PandarGeneral_Internal::PandarGeneral_Internal(
   gps_callback_ = gps_callback;
   last_azimuth_ = 0;
   frame_id_ = frame_id;
+  model_ = model;
   tz_second_ = tz * 3600;
   pcl_type_ = pcl_type;
   connect_lidar_ = true;
@@ -115,7 +116,7 @@ PandarGeneral_Internal::PandarGeneral_Internal(
 PandarGeneral_Internal::PandarGeneral_Internal(std::string pcap_path, \
     boost::function<void(boost::shared_ptr<PPointCloud>, double, hesai_lidar::PandarScanPtr)> \
     pcl_callback, uint16_t start_angle, int tz, int pcl_type, \
-    std::string frame_id, std::string timestampType) {
+    std::string model, std::string frame_id, std::string timestampType) {
   pthread_mutex_init(&lidar_lock_, NULL);
   sem_init(&lidar_sem_, 0, 0);
 
@@ -125,12 +126,13 @@ PandarGeneral_Internal::PandarGeneral_Internal(std::string pcap_path, \
   enable_lidar_recv_thr_ = false;
   enable_lidar_process_thr_ = false;
 
-  pcap_reader_ = new PcapReader(pcap_path,frame_id);
+  pcap_reader_ = new PcapReader(pcap_path, model);
 
   start_angle_ = start_angle;
   pcl_callback_ = pcl_callback;
   gps_callback_ = NULL;
   last_azimuth_ = 0;
+  model_ = model;
   frame_id_ = frame_id;
   tz_second_ = tz * 3600;
   pcl_type_ = pcl_type;
@@ -433,7 +435,7 @@ void PandarGeneral_Internal::Init() {
   laserQTOffset_[62] = 10.0f + 134.39f;
   laserQTOffset_[63] = 10.0f + 136.45f;
 
-  if (frame_id_ == "Pandar40P" || frame_id_ == "Pandar40M") {
+  if (model_ == "Pandar40P" || model_ == "Pandar40M") {
     for (int i = 0; i < LASER_COUNT; i++) {
       General_elev_angle_map_[i] = pandar40p_elev_angle_map[i];
       General_horizatal_azimuth_offset_map_[i] = \
@@ -441,7 +443,7 @@ void PandarGeneral_Internal::Init() {
     }
   }
 
-  if (frame_id_ == "Pandar64") {
+  if (model_ == "Pandar64") {
     for (int i = 0; i < HS_LIDAR_L64_UNIT_NUM; i++) {
       General_elev_angle_map_[i] = pandarGeneral_elev_angle_map[i];
       General_horizatal_azimuth_offset_map_[i] = \
@@ -449,21 +451,21 @@ void PandarGeneral_Internal::Init() {
     }
   }
 
-  if (frame_id_ == "Pandar20A" || frame_id_ == "Pandar20B") {
+  if (model_ == "Pandar20A" || model_ == "Pandar20B") {
     for (int i = 0; i < HS_LIDAR_L20_UNIT_NUM; i++) {
       General_elev_angle_map_[i] = pandar20_elev_angle_map[i];
       General_horizatal_azimuth_offset_map_[i] = pandar20_horizatal_azimuth_offset_map[i];
     }
   }
 
-  if (frame_id_ == "PandarQT") {
+  if (model_ == "PandarQT") {
     for (int i = 0; i < HS_LIDAR_QT_UNIT_NUM; i++) {
       General_elev_angle_map_[i] = pandarQT_elev_angle_map[i];
       General_horizatal_azimuth_offset_map_[i] = pandarQT_horizatal_azimuth_offset_map[i];
     }
   }
 
-  if (frame_id_ == "PandarXT-32") {
+  if (model_ == "PandarXT-32") {
     for (int i = 0; i < HS_LIDAR_XT_UNIT_NUM; i++) {
       General_elev_angle_map_[i] = pandarXT_elev_angle_map[i];
       General_horizatal_azimuth_offset_map_[i] = pandarXT_horizatal_azimuth_offset_map[i];
@@ -471,7 +473,7 @@ void PandarGeneral_Internal::Init() {
     }
   }
 
-  if (frame_id_ == "PandarXT-16") {
+  if (model_ == "PandarXT-16") {
     for (int i = 0; i < HS_LIDAR_XT16_UNIT_NUM; i++) {
       General_elev_angle_map_[i] = pandarXT_elev_angle_map[i*2];
       General_horizatal_azimuth_offset_map_[i] = pandarXT_horizatal_azimuth_offset_map[i*2];
@@ -791,8 +793,8 @@ void PandarGeneral_Internal::ProcessLiarPacket() {
         last_azimuth_ = pkt.blocks[i].azimuth;
       }
     } 
-    else if((packet.size == HS_LIDAR_XT_PACKET_SIZE && (frame_id_ == "XT" || frame_id_ == "PandarXT-32")) || \
-        (packet.size == HS_LIDAR_XT16_PACKET_SIZE && (frame_id_ == "PandarXT-16"))) {
+    else if((packet.size == HS_LIDAR_XT_PACKET_SIZE && (model_ == "XT" || model_ == "PandarXT-32")) || \
+        (packet.size == HS_LIDAR_XT16_PACKET_SIZE && (model_ == "PandarXT-16"))) {
       HS_LIDAR_XT_Packet pkt;
       ret = ParseXTData(&pkt, packet.data, packet.size);
       if (ret != 0) {
@@ -1440,21 +1442,21 @@ void PandarGeneral_Internal::CalcL20PointXYZIT(HS_LIDAR_L20_Packet *pkt, int blo
 
       if (pkt->echo == 0x39) {
         // dual return, block 0&1 (2&3 , 4*5 ...)'s timestamp is the same.
-        if (strcmp(frame_id_.c_str(), "Pandar20A") == 0) {
+        if (strcmp(model_.c_str(), "Pandar20A") == 0) {
           point.timestamp = point.timestamp - \
               (static_cast<double>(block20OffsetDual_[blockid] + \
               laser20AOffset_[i]) / 1000000.0f);
-        } else if (strcmp(frame_id_.c_str(), "Pandar20B") == 0) {
+        } else if (strcmp(model_.c_str(), "Pandar20B") == 0) {
           point.timestamp = point.timestamp - \
               (static_cast<double>(block20OffsetDual_[blockid] + \
               laser20BOffset_[i]) / 1000000.0f);
         }
       } else {
-        if (strcmp(frame_id_.c_str(), "Pandar20A") == 0) {
+        if (strcmp(model_.c_str(), "Pandar20A") == 0) {
           point.timestamp = point.timestamp - \
               (static_cast<double>(block20OffsetSingle_[blockid] + \
               laser20AOffset_[i]) / 1000000.0f);
-        } else if (strcmp(frame_id_.c_str(), "Pandar20B") == 0) {
+        } else if (strcmp(model_.c_str(), "Pandar20B") == 0) {
           point.timestamp = point.timestamp - \
               (static_cast<double>(block20OffsetSingle_[blockid] + \
               laser20BOffset_[i]) / 1000000.0f);
@@ -1529,10 +1531,9 @@ void PandarGeneral_Internal::CalcQTPointXYZIT(HS_LIDAR_QT_Packet *pkt, int block
       if (pkt->echo == 0x05) {
         // dual return, block 0&1 (2&3 , 4*5 ...)'s timestamp is the same.
         // dual:0x05, single:0x00
-        point.timestamp =
-            point.timestamp + (static_cast<double>(blockQTOffsetDual_[blockid] +
-                                                  laserQTOffset_[i]) /
-                              1000000.0f);
+        point.timestamp = point.timestamp +
+                          (static_cast<double>(blockQTOffsetDual_[blockid] +
+                                               laserQTOffset_[i]) / 1000000.0f);
       } else {
         point.timestamp = point.timestamp + \
             (static_cast<double>(blockQTOffsetSingle_[blockid] + laserQTOffset_[i]) / \

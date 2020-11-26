@@ -266,7 +266,7 @@ class PandarGeneral_Internal {
       std::string device_ip, uint16_t lidar_port, uint16_t gps_port,
       boost::function<void(boost::shared_ptr<PPointCloud>, double, hesai_lidar::PandarScanPtr)>
           pcl_callback, boost::function<void(double)> gps_callback, 
-      uint16_t start_angle, int tz, int pcl_type, std::string frame_id, std::string timestampType);
+      uint16_t start_angle, int tz, int pcl_type, std::string model, std::string frame_id, std::string timestampType);
 
   /**
    * @brief Constructor
@@ -281,7 +281,7 @@ class PandarGeneral_Internal {
       std::string pcap_path, \
       boost::function<void(boost::shared_ptr<PPointCloud>, double, hesai_lidar::PandarScanPtr)> \
       pcl_callback, uint16_t start_angle, int tz, int pcl_type, \
-      std::string frame_id, std::string timestampType);// the default timestamp type is LiDAR time
+      std::string model, std::string frame_id, std::string timestampType);// the default timestamp type is LiDAR time
   ~PandarGeneral_Internal();
 
   /**
@@ -386,6 +386,7 @@ class PandarGeneral_Internal {
 
   int tz_second_;
   std::string frame_id_;
+  std::string model_;
   int pcl_type_;
   PcapReader *pcap_reader_;
   bool connect_lidar_;

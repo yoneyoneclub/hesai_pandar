@@ -23,7 +23,7 @@ using namespace std;
 
 class PcapReader {
 public:
-  PcapReader(std::string path, std::string frame_id);
+  PcapReader(std::string path, std::string model);
   ~PcapReader();
 
   void start(boost::function<void(const uint8_t*, const int, double timestamp)> callback);

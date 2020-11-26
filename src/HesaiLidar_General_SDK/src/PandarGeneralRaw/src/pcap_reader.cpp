@@ -9,10 +9,10 @@
 
 #define PKT_HEADER_SIZE (42)
 
-PcapReader::PcapReader(std::string path, std::string frame_id) {
+PcapReader::PcapReader(std::string path, std::string model) {
   initTimeIndexMap();
   pcapPath   = path;
-  m_sFrameId = frame_id;
+  m_sFrameId = model;
   loop       = false;
   parse_thr_ = NULL;
   std::map<std::string, std::pair<int,int>>::iterator iter = m_timeIndexMap.find(m_sFrameId);

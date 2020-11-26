@@ -21,7 +21,9 @@ public:
     int gpsPort;
     double startAngle;
     string lidarCorrectionFile;  // Get local correction when getting from lidar failed
-    string lidarType;
+    string model;
+    string frame_id;
+    int timeZone;
     int pclDataType;
     string pcapFile;
     string dataType;
@@ -32,7 +34,9 @@ public:
     nh.getParam("gps_port", gpsPort);
     nh.getParam("start_angle", startAngle);
     nh.getParam("lidar_correction_file", lidarCorrectionFile);
-    nh.getParam("lidar_type", lidarType);
+    nh.getParam("model", model);
+    nh.getParam("frame_id", frame_id);
+    nh.getParam("time_zone", timeZone);
     nh.getParam("pcldata_type", pclDataType);
     nh.getParam("publish_type", m_sPublishType);
     nh.getParam("timestamp_type", m_sTimestampType);
@@ -40,7 +44,7 @@ public:
 
     if(!pcapFile.empty()){
       hsdk = new PandarGeneralSDK(pcapFile, boost::bind(&HesaiLidarClient::lidarCallback, this, _1, _2, _3), \
-      static_cast<int>(startAngle * 100 + 0.5), 0, pclDataType, lidarType, m_sTimestampType);
+      static_cast<int>(startAngle * 100 + 0.5), timeZone, pclDataType, model, frame_id, m_sTimestampType);
       if (hsdk != NULL) {
         ifstream fin(lidarCorrectionFile);
         int length = 0;
@@ -52,12 +56,12 @@ public:
         fin.read(buffer, length);
         fin.close();
         strlidarCalibration = buffer;
-        hsdk->LoadLidarCorrectionFile(strlidarCalibration);
+        // hsdk->LoadLidarCorrectionFile(strlidarCalibration);
       }
     }
     else if ("rosbag" == dataType){
       hsdk = new PandarGeneralSDK("", boost::bind(&HesaiLidarClient::lidarCallback, this, _1, _2, _3), \
-      static_cast<int>(startAngle * 100 + 0.5), 0, pclDataType, lidarType, m_sTimestampType);
+      static_cast<int>(startAngle * 100 + 0.5), timeZone, pclDataType, model, frame_id, m_sTimestampType);
       if (hsdk != NULL) {
         ifstream fin(lidarCorrectionFile);
         int length = 0;
@@ -76,7 +80,7 @@ public:
     else {
       hsdk = new PandarGeneralSDK(serverIp, lidarRecvPort, gpsPort, \
         boost::bind(&HesaiLidarClient::lidarCallback, this, _1, _2, _3), \
-        NULL, static_cast<int>(startAngle * 100 + 0.5), 0, pclDataType, lidarType, m_sTimestampType);
+        NULL, static_cast<int>(startAngle * 100 + 0.5), timeZone, pclDataType, model, frame_id, m_sTimestampType);
     }
     
     if (hsdk != NULL) {
@@ -98,7 +102,7 @@ public:
     }
     if(m_sPublishType == "both" || m_sPublishType == "raw"){
       packetPublisher.publish(scan);
-      printf("raw size: %d.\n", scan->packets.size());
+      printf("raw size: %zu.\n", scan->packets.size());
     }
   }
 

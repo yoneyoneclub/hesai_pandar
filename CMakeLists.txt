@@ -82,7 +82,7 @@ target_link_libraries(PandarGeneralSDK
 
 ###hesai node
 add_executable(hesai_lidar_node
-    src/main.cc
+    src/node.cpp
 )
 
 target_include_directories(hesai_lidar_node PRIVATE

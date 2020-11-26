@@ -4,7 +4,9 @@
 	<arg name="lidar_recv_port"  default="2368"/>
 	<arg name="gps_port"  default="10110"/>
 	<arg name="start_angle"  default="0"/>
-	<arg name="lidar_type" default=""/>
+	<arg name="model" default=""/>
+	<arg name="frame_id" default=""/>
+	<arg name="time_zone" default="9"/>
 	<arg name="pcldata_type" default="0"/>
 	<arg name="publish_type" default="points"/>
 	<arg name="timestamp_type" default=""/>
@@ -17,7 +19,9 @@
 		<param name="lidar_recv_port"  type="int" value="$(arg lidar_recv_port)"/>
 		<param name="gps_port"  type="int" value="$(arg gps_port)"/>
 		<param name="start_angle"  type="double" value="$(arg start_angle)"/>
-		<param name="lidar_type"  type="string" value="$(arg lidar_type)"/>
+		<param name="model"  type="string" value="$(arg model)"/>
+		<param name="frame_id"  type="string" value="$(arg frame_id)"/>
+		<param name="time_zone"  type="int" value="$(arg time_zone)"/>
 		<param name="pcldata_type"  type="int" value="$(arg pcldata_type)"/>
 		<param name="publish_type"  type="string" value="$(arg publish_type)"/>
 		<param name="timestamp_type"  type="string" value="$(arg timestamp_type)"/>
