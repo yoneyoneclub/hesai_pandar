@@ -257,7 +257,7 @@ PTC_ErrCode TcpCommandSetCalibration(const void* handle, const char* buffer,
 
 PTC_ErrCode TcpCommandGetCalibration(const void* handle, char** buffer,
                                      unsigned int* len) {
-  printf("buffer is: %s,len is: %d\n",buffer,len);
+  // printf("buffer is: %s,len is: %d\n",buffer,len);
   if (!handle || !buffer || !len) {
     printf("Bad Parameter!!!\n");
     return PTC_ERROR_BAD_PARAMETER;
@@ -288,7 +288,7 @@ PTC_ErrCode TcpCommandGetCalibration(const void* handle, char** buffer,
 }
 PTC_ErrCode TcpCommandGetLidarCalibration(const void* handle, char** buffer,
                                           unsigned int* len) {
-  printf("buffer is: %s,len is: %d\n",buffer,len);
+  // printf("buffer is: %s,len is: %d\n",buffer,len);
   if (!handle || !buffer || !len) {
     printf("Bad Parameter!!!\n");
     return PTC_ERROR_BAD_PARAMETER;

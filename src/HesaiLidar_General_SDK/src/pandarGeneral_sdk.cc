@@ -23,7 +23,7 @@
 
 PandarGeneralSDK::PandarGeneralSDK(
     std::string device_ip, const uint16_t lidar_port, const uint16_t gps_port,
-    boost::function<void(boost::shared_ptr<PPointCloud>, double, hesai_lidar::PandarScanPtr)>
+    boost::function<void(pcl::PointCloud<PointXYZIRADT>::Ptr, double, hesai_lidar::PandarScanPtr)>
         pcl_callback,
     boost::function<void(double)> gps_callback, uint16_t start_angle,
     int tz, int pcl_type, std::string model, std::string frame_id, std::string timestampType) {
@@ -45,7 +45,7 @@ PandarGeneralSDK::PandarGeneralSDK(
 
 PandarGeneralSDK::PandarGeneralSDK(\
     std::string pcap_path, \
-    boost::function<void(boost::shared_ptr<PPointCloud>, double, hesai_lidar::PandarScanPtr)> pcl_callback, \
+    boost::function<void(pcl::PointCloud<PointXYZIRADT>::Ptr, double, hesai_lidar::PandarScanPtr)> pcl_callback, \
     uint16_t start_angle, int tz, int pcl_type, std::string model, std::string frame_id, std::string timestampType) {
   pandarGeneral_ = NULL;
 

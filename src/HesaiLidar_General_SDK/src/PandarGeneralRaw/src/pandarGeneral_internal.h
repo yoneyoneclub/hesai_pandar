@@ -264,7 +264,7 @@ class PandarGeneral_Internal {
    */
   PandarGeneral_Internal(
       std::string device_ip, uint16_t lidar_port, uint16_t gps_port,
-      boost::function<void(boost::shared_ptr<PPointCloud>, double, hesai_lidar::PandarScanPtr)>
+      boost::function<void(pcl::PointCloud<PointXYZIRADT>::Ptr, double, hesai_lidar::PandarScanPtr)>
           pcl_callback, boost::function<void(double)> gps_callback, 
       uint16_t start_angle, int tz, int pcl_type, std::string model, std::string frame_id, std::string timestampType);
 
@@ -279,7 +279,7 @@ class PandarGeneral_Internal {
    */
   PandarGeneral_Internal(
       std::string pcap_path, \
-      boost::function<void(boost::shared_ptr<PPointCloud>, double, hesai_lidar::PandarScanPtr)> \
+      boost::function<void(pcl::PointCloud<PointXYZIRADT>::Ptr, double, hesai_lidar::PandarScanPtr)> \
       pcl_callback, uint16_t start_angle, int tz, int pcl_type, \
       std::string model, std::string frame_id, std::string timestampType);// the default timestamp type is LiDAR time
   ~PandarGeneral_Internal();
@@ -306,26 +306,23 @@ class PandarGeneral_Internal {
   void ProcessGps(const PandarGPS &gpsMsg);
   void ProcessLiarPacket();
   void PushLiDARData(PandarPacket packet);
+  
   int ParseRawData(Pandar40PPacket *packet, const uint8_t *buf, const int len);
   int ParseL64Data(HS_LIDAR_L64_Packet *packet, const uint8_t *recvbuf, const int len);
   int ParseL20Data(HS_LIDAR_L20_Packet *packet, const uint8_t *recvbuf, const int len);
   int ParseQTData(HS_LIDAR_QT_Packet *packet, const uint8_t *recvbuf, const int len);
   int ParseXTData(HS_LIDAR_XT_Packet *packet, const uint8_t *recvbuf, const int len);
-
   int ParseGPS(PandarGPS *packet, const uint8_t *recvbuf, const int size);
-  void CalcPointXYZIT(Pandar40PPacket *pkt, int blockid,
-                      boost::shared_ptr<PPointCloud> cld);
-  void CalcL64PointXYZIT(HS_LIDAR_L64_Packet *pkt, int blockid, char chLaserNumber,
-                      boost::shared_ptr<PPointCloud> cld);
-  void CalcL20PointXYZIT(HS_LIDAR_L20_Packet *pkt, int blockid, char chLaserNumber,
-                      boost::shared_ptr<PPointCloud> cld);
-  void CalcQTPointXYZIT(HS_LIDAR_QT_Packet *pkt, int blockid, char chLaserNumber,
-                      boost::shared_ptr<PPointCloud> cld);
-  void CalcXTPointXYZIT(HS_LIDAR_XT_Packet *pkt, int blockid, char chLaserNumber,
-                      boost::shared_ptr<PPointCloud> cld);
-  void FillPacket(const uint8_t *buf, const int len, double timestamp);
 
-  void EmitBackMessege(char chLaserNumber, boost::shared_ptr<PPointCloud> cld, hesai_lidar::PandarScanPtr scan);
+  void CalcPointXYZIRADT(Pandar40PPacket *pkt, int blockid, const pcl::PointCloud<PointXYZIRADT>::Ptr cld);
+  void CalcPointXYZIRADT(HS_LIDAR_QT_Packet *pkt, int blockid, char chLaserNumber, pcl::PointCloud<PointXYZIRADT>::Ptr cld);
+  void CalcPointXYZIRADT(HS_LIDAR_L64_Packet *pkt, int blockid, char chLaserNumber, pcl::PointCloud<PointXYZIRADT>::Ptr cld);
+  void CalcPointXYZIRADT(HS_LIDAR_L20_Packet *pkt, int blockid, char chLaserNumber, pcl::PointCloud<PointXYZIRADT>::Ptr cld);
+  void CalcPointXYZIRADT(HS_LIDAR_XT_Packet *pkt, int blockid, char chLaserNumber, pcl::PointCloud<PointXYZIRADT>::Ptr cld);
+
+  void FillPacket(const uint8_t *buf, const int len, double timestamp);
+  void EmitBackMessege(char chLaserNumber, pcl::PointCloud<PointXYZIRADT>::Ptr, hesai_lidar::PandarScanPtr scan);
+
   pthread_mutex_t lidar_lock_;
   sem_t lidar_sem_;
   boost::thread *lidar_recv_thr_;
@@ -339,8 +336,7 @@ class PandarGeneral_Internal {
   std::list<struct PandarPacket_s> lidar_packets_;
 
   boost::shared_ptr<Input> input_;
-  boost::function<void(boost::shared_ptr<PPointCloud> cld, double timestamp, hesai_lidar::PandarScanPtr scan)>
-      pcl_callback_;
+  boost::function<void(pcl::PointCloud<PointXYZIRADT>::Ptr cld, double timestamp, hesai_lidar::PandarScanPtr scan)> pcl_callback_;
   boost::function<void(double timestamp)> gps_callback_;
 
   float sin_lookup_table_[ROTATION_MAX_UNITS];

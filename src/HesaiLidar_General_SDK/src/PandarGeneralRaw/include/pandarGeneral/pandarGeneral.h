@@ -44,7 +44,7 @@ class PandarGeneral {
    *                          should be <real angle> * 100.
    */
   PandarGeneral(std::string device_ip, uint16_t lidar_port, uint16_t gps_port,
-            boost::function<void(boost::shared_ptr<PPointCloud>, double, hesai_lidar::PandarScanPtr)>
+            boost::function<void(pcl::PointCloud<PointXYZIRADT>::Ptr, double, hesai_lidar::PandarScanPtr)>
                 pcl_callback,
             boost::function<void(double)> gps_callback, uint16_t start_angle,
             int tz, int pcl_type, std::string model, std::string frame_id, std::string timestampType); // the default timestamp type is LiDAR time
@@ -59,7 +59,7 @@ class PandarGeneral {
    *        frame_id          The frame id of pcd
    */
   PandarGeneral(std::string pcap_path, \
-      boost::function<void(boost::shared_ptr<PPointCloud>, double, hesai_lidar::PandarScanPtr)> pcl_callback, \
+      boost::function<void(pcl::PointCloud<PointXYZIRADT>::Ptr, double, hesai_lidar::PandarScanPtr)> pcl_callback, \
       uint16_t start_angle, int tz, int pcl_type, std::string model, std::string frame_id, std::string timestampType); // the default timestamp type is LiDAR time
 
   /**

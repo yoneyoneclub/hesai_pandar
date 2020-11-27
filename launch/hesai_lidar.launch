@@ -14,6 +14,8 @@
 	<arg name="lidar_correction_file"  default="$(find hesai_lidar)/config/correction.csv"/>
 
 	<node pkg="hesai_lidar" name="hesai_lidar" type="hesai_lidar_node" output="screen" >
+	    <remap from="pandar_points" to="pointcloud_raw" />
+		<remap from="pandar_points_ex" to="pointcloud_raw_ex" />
 		<param name="pcap_file" type="string" value="$(arg pcap_file)"/>
 		<param name="server_ip" type="string" value="$(arg server_ip)"/>
 		<param name="lidar_recv_port"  type="int" value="$(arg lidar_recv_port)"/>

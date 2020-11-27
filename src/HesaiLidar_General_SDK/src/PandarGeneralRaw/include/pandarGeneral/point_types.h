@@ -17,22 +17,37 @@
 #ifndef INCLUDE_POINT_TYPES_H_
 #define INCLUDE_POINT_TYPES_H_
 
+#include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
 
-struct PointXYZIT {
-  PCL_ADD_POINT4D   //添加pcl里xyz
+
+struct PointXYZIR
+{
+  PCL_ADD_POINT4D;
   float intensity;
-  double timestamp;
-  uint16_t ring;                   ///< laser ring number
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW  // make sure our new allocators are aligned,确保定义新类型点云内存与SSE对齐
-} EIGEN_ALIGN16;                   // 强制SSE填充以正确对齐内存
+  uint16_t ring;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+} EIGEN_ALIGN16;
+
+struct PointXYZIRADT
+{
+  PCL_ADD_POINT4D;
+  float intensity;
+  uint16_t ring;
+  float azimuth;
+  float distance;
+  double time_stamp;
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+} EIGEN_ALIGN16;
+
 
 POINT_CLOUD_REGISTER_POINT_STRUCT(
-    PointXYZIT,
-    (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(
-        double, timestamp, timestamp)(uint16_t, ring, ring))
+  PointXYZIR,
+  (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(std::uint16_t, ring, ring))
 
-typedef PointXYZIT PPoint;
-typedef pcl::PointCloud<PPoint> PPointCloud;
+POINT_CLOUD_REGISTER_POINT_STRUCT(
+  PointXYZIRADT,
+  (float, x, x)(float, y, y)(float, z, z)(float, intensity, intensity)(std::uint16_t, ring, ring)(
+    float, azimuth, azimuth)(float, distance, distance)(double, time_stamp, time_stamp))
 
 #endif  // INCLUDE_POINT_TYPES_H_
