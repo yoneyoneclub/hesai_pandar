@@ -123,11 +123,11 @@ public:
       const auto points_xyzir = convert(cld);
       lidarPublisher.publish(points_xyzir);
       
-      printf("timestamp: %f, point size: %ld.\n",timestamp, cld->points.size());
+      // printf("timestamp: %f, point size: %ld.\n",timestamp, cld->points.size());
     }
     if(m_sPublishType == "both" || m_sPublishType == "raw"){
       packetPublisher.publish(scan);
-      printf("raw size: %zu.\n", scan->packets.size());
+      // printf("raw size: %zu.\n", scan->packets.size());
     }
   }
 
