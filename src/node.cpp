@@ -13,85 +13,82 @@ class HesaiLidarClient
 public:
   HesaiLidarClient(ros::NodeHandle node, ros::NodeHandle nh)
   {
-    packetPublisher = node.advertise<hesai_lidar::PandarScan>("pandar_packets",10);
-    lidarPublisher = node.advertise<sensor_msgs::PointCloud2>("pandar_points", 10);
-    lidarExPublisher = node.advertise<sensor_msgs::PointCloud2>("pandar_points_ex", 10);
+    pandar_packet_pub_ = node.advertise<hesai_lidar::PandarScan>("pandar_packets",10);
+    pandar_points_pub_ = node.advertise<sensor_msgs::PointCloud2>("pandar_points", 10);
+    pandar_points_ex_pub_ = node.advertise<sensor_msgs::PointCloud2>("pandar_points_ex", 10);
 
-    string serverIp;
-    int lidarRecvPort;
-    int gpsPort;
-    double startAngle;
-    string lidarCorrectionFile;  // Get local correction when getting from lidar failed
+    string device_ip;
+    int lidar_port;
+    int gps_port;
+    double scan_phase;
+    string calibration;  // Get local correction when getting from lidar failed
     string model;
     string frame_id;
-    int timeZone;
-    int pclDataType;
-    string pcapFile;
-    string dataType;
+    int time_zone;
+    string pcap;
 
-    nh.getParam("pcap_file", pcapFile);
-    nh.getParam("server_ip", serverIp);
-    nh.getParam("lidar_recv_port", lidarRecvPort);
-    nh.getParam("gps_port", gpsPort);
-    nh.getParam("start_angle", startAngle);
-    nh.getParam("lidar_correction_file", lidarCorrectionFile);
+    nh.getParam("pcap", pcap);
+    nh.getParam("device_ip", device_ip);
+    nh.getParam("lidar_port", lidar_port);
+    nh.getParam("gps_port", gps_port);
+    nh.getParam("scan_phase", scan_phase);
+    nh.getParam("calibration", calibration);
     nh.getParam("model", model);
     nh.getParam("frame_id", frame_id);
-    nh.getParam("time_zone", timeZone);
-    nh.getParam("pcldata_type", pclDataType);
-    nh.getParam("publish_type", m_sPublishType);
-    nh.getParam("timestamp_type", m_sTimestampType);
-    nh.getParam("data_type", dataType);
+    nh.getParam("time_zone", time_zone);
+    nh.getParam("publish_packet", publish_packet_);
+    nh.getParam("timestamp_type", timestamp_type_);
 
-    if(!pcapFile.empty()){
-      hsdk = new PandarGeneralSDK(pcapFile, boost::bind(&HesaiLidarClient::lidarCallback, this, _1, _2, _3), \
-      static_cast<int>(startAngle * 100 + 0.5), timeZone, pclDataType, model, frame_id, m_sTimestampType);
-      if (hsdk != NULL) {
-        // ifstream fin(lidarCorrectionFile);
-        // int length = 0;
-        // std::string strlidarCalibration;
-        // fin.seekg(0, std::ios::end);
-        // length = fin.tellg();
-        // fin.seekg(0, std::ios::beg);
-        // char *buffer = new char[length];
-        // fin.read(buffer, length);
-        // fin.close();
-        // strlidarCalibration = buffer;
-        // hsdk->LoadLidarCorrectionFile(strlidarCalibration);
-      }
+    if(!pcap.empty()){
+      sdk_.reset(new PandarGeneralSDK(pcap, boost::bind(&HesaiLidarClient::lidarCallback, this, _1, _2, _3), \
+      static_cast<int>(scan_phase * 100 + 0.5), time_zone, model, frame_id, timestamp_type_));
     }
-    else if ("rosbag" == dataType){
-      hsdk = new PandarGeneralSDK("", boost::bind(&HesaiLidarClient::lidarCallback, this, _1, _2, _3), \
-      static_cast<int>(startAngle * 100 + 0.5), timeZone, pclDataType, model, frame_id, m_sTimestampType);
-      if (hsdk != NULL) {
-        // ifstream fin(lidarCorrectionFile);
-        // int length = 0;
-        // std::string strlidarCalibration;
-        // fin.seekg(0, std::ios::end);
-        // length = fin.tellg();
-        // fin.seekg(0, std::ios::beg);
-        // char *buffer = new char[length];
-        // fin.read(buffer, length);
-        // fin.close();
-        // strlidarCalibration = buffer;
-        // hsdk->LoadLidarCorrectionFile(strlidarCalibration);
+    else if (!publish_packet_){
+      sdk_.reset(new PandarGeneralSDK("", boost::bind(&HesaiLidarClient::lidarCallback, this, _1, _2, _3), \
+      static_cast<int>(scan_phase * 100 + 0.5), time_zone, model, frame_id, timestamp_type_));
+      if (sdk_ != nullptr) {
+        ROS_INFO("Subscribe pandar_packets");
         packetSubscriber = node.subscribe("pandar_packets", 10, &HesaiLidarClient::scanCallback, (HesaiLidarClient*)this, ros::TransportHints().tcpNoDelay(true));
       }
     }
     else {
-      hsdk = new PandarGeneralSDK(serverIp, lidarRecvPort, gpsPort, \
+      sdk_.reset(new PandarGeneralSDK(device_ip, lidar_port, gps_port, \
         boost::bind(&HesaiLidarClient::lidarCallback, this, _1, _2, _3), \
-        NULL, static_cast<int>(startAngle * 100 + 0.5), timeZone, pclDataType, model, frame_id, m_sTimestampType);
+        NULL, static_cast<int>(scan_phase * 100 + 0.5), time_zone, model, frame_id, timestamp_type_));
     }
-    
-    if (hsdk != NULL) {
-        hsdk->Start();
-        // hsdk->LoadLidarCorrectionFile("...");  // parameter is stream in lidarCorrectionFile
+
+    if (sdk_ != nullptr) {
+        sdk_->Start();
+        if(!calibration.empty()){
+          ROS_INFO("Load calibration data from csv");
+          sdk_->LoadLidarCorrectionFile(loadCalibrationString(calibration));
+        }
     } else {
-        printf("create sdk fail\n");
+        ROS_ERROR("create sdk fail\n");
     }
   }
 
+
+  void lidarCallback(pcl::PointCloud<PointXYZIRADT>::Ptr cld, double timestamp, hesai_lidar::PandarScanPtr scan) // the timestamp from first point cloud of cld
+  {
+    if(publish_packet_){
+      pandar_packet_pub_.publish(scan);
+      // printf("raw size: %zu.\n", scan->packets.size());
+    }
+    cld->header.stamp = pcl_conversions::toPCL(ros::Time(timestamp));
+    pandar_points_ex_pub_.publish(cld);
+
+    const auto points_xyzir = convert(cld);
+    pandar_points_pub_.publish(points_xyzir);      
+    // printf("timestamp: %f, point size: %ld.\n",timestamp, cld->points.size());
+  }
+  
+
+  void scanCallback(const hesai_lidar::PandarScanPtr scan)
+  {
+    // printf("pandar_packets topic message received,\n");
+    sdk_->PushScanPacket(scan);
+  }
 
   pcl::PointCloud<PointXYZIR>::Ptr convert(
     const pcl::PointCloud<PointXYZIRADT>::ConstPtr & input_pointcloud)
@@ -114,37 +111,30 @@ public:
     return output_pointcloud;
   }
 
-  void lidarCallback(pcl::PointCloud<PointXYZIRADT>::Ptr cld, double timestamp, hesai_lidar::PandarScanPtr scan) // the timestamp from first point cloud of cld
+  std::string loadCalibrationString(std::string lidarCorrectionFile)
   {
-    if(m_sPublishType == "both" || m_sPublishType == "points"){
-      cld->header.stamp = pcl_conversions::toPCL(ros::Time(timestamp));
-      lidarExPublisher.publish(cld);
-
-      const auto points_xyzir = convert(cld);
-      lidarPublisher.publish(points_xyzir);
-      
-      // printf("timestamp: %f, point size: %ld.\n",timestamp, cld->points.size());
-    }
-    if(m_sPublishType == "both" || m_sPublishType == "raw"){
-      packetPublisher.publish(scan);
-      // printf("raw size: %zu.\n", scan->packets.size());
-    }
-  }
-
-  void scanCallback(const hesai_lidar::PandarScanPtr scan)
-  {
-    // printf("pandar_packets topic message received,\n");
-    hsdk->PushScanPacket(scan);
+    ifstream fin(lidarCorrectionFile);
+    int length = 0;
+    std::string strlidarCalibration;
+    fin.seekg(0, std::ios::end);
+    length = fin.tellg();
+    fin.seekg(0, std::ios::beg);
+    char *buffer = new char[length];
+    fin.read(buffer, length);
+    fin.close();
+    strlidarCalibration = buffer;
+    return strlidarCalibration;
   }
 
 private:
-  ros::Publisher packetPublisher;
-  ros::Publisher lidarPublisher;
-  ros::Publisher lidarExPublisher;
+  ros::Publisher pandar_packet_pub_;
+  ros::Publisher pandar_points_pub_;
+  ros::Publisher pandar_points_ex_pub_;
 
-  PandarGeneralSDK* hsdk;
-  string m_sPublishType;
-  string m_sTimestampType;
+  // PandarGeneralSDK* hsdk;
+  boost::shared_ptr<PandarGeneralSDK> sdk_;
+  string timestamp_type_;
+  bool publish_packet_;
   ros::Subscriber packetSubscriber;
 };
 

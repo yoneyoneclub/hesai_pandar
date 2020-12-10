@@ -84,7 +84,7 @@ PandarGeneral_Internal::PandarGeneral_Internal(
     std::string device_ip, uint16_t lidar_port, uint16_t gps_port,
     boost::function<void(pcl::PointCloud<PointXYZIRADT>::Ptr, double, hesai_lidar::PandarScanPtr)> pcl_callback,
     boost::function<void(double)> gps_callback, uint16_t start_angle, int tz,
-    int pcl_type, std::string model, std::string frame_id, std::string timestampType) {
+    std::string model, std::string frame_id, std::string timestampType) {
       // LOG_FUNC();
   pthread_mutex_init(&lidar_lock_, NULL);
   sem_init(&lidar_sem_, 0, 0);
@@ -104,7 +104,6 @@ PandarGeneral_Internal::PandarGeneral_Internal(
   frame_id_ = frame_id;
   model_ = model;
   tz_second_ = tz * 3600;
-  pcl_type_ = pcl_type;
   connect_lidar_ = true;
   pcap_reader_ = NULL;
   m_sTimestampType = timestampType;
@@ -115,7 +114,7 @@ PandarGeneral_Internal::PandarGeneral_Internal(
 
 PandarGeneral_Internal::PandarGeneral_Internal(std::string pcap_path, \
     boost::function<void(pcl::PointCloud<PointXYZIRADT>::Ptr, double, hesai_lidar::PandarScanPtr)> pcl_callback, \
-    uint16_t start_angle, int tz, int pcl_type, \
+    uint16_t start_angle, int tz, \
     std::string model, std::string frame_id, std::string timestampType) {
   pthread_mutex_init(&lidar_lock_, NULL);
   sem_init(&lidar_sem_, 0, 0);
@@ -135,7 +134,6 @@ PandarGeneral_Internal::PandarGeneral_Internal(std::string pcap_path, \
   model_ = model;
   frame_id_ = frame_id;
   tz_second_ = tz * 3600;
-  pcl_type_ = pcl_type;
   connect_lidar_ = false;
   m_sTimestampType = timestampType;
   m_dPktTimestamp = 0.0f;
@@ -1288,11 +1286,6 @@ void PandarGeneral_Internal::CalcPointXYZIRADT(Pandar40PPacket *pkt, int blockid
       }
     }
 
-    // if (pcl_type_) {
-    //   PointCloudList[i].push_back(point);
-    // } else {
-    //   cld->push_back(point);
-    // }
     cld->push_back(point);
   }
 }
@@ -1367,10 +1360,6 @@ void PandarGeneral_Internal::CalcPointXYZIRADT(HS_LIDAR_QT_Packet *pkt, int bloc
       }
     }
 
-    // if (pcl_type_)
-    //   PointCloudList[i].push_back(point);
-    // else
-    //   cld->push_back(point);
     cld->push_back(point);
   }
 }

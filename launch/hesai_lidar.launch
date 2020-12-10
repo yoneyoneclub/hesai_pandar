@@ -1,33 +1,29 @@
 <launch>
-	<arg name="pcap_file"  default=""/>
-	<arg name="server_ip" default="192.168.1.201"/>
-	<arg name="lidar_recv_port"  default="2368"/>
+	<arg name="pcap"  default=""/>
+	<arg name="device_ip" default="192.168.1.201"/>
+	<arg name="lidar_port"  default="2368"/>
 	<arg name="gps_port"  default="10110"/>
-	<arg name="start_angle"  default="0"/>
+	<arg name="scan_phase"  default="0"/>
 	<arg name="model" default=""/>
 	<arg name="frame_id" default=""/>
 	<arg name="time_zone" default="9"/>
-	<arg name="pcldata_type" default="0"/>
-	<arg name="publish_type" default="both"/>
 	<arg name="timestamp_type" default=""/>
-	<arg name="data_type" default=""/>
-	<arg name="lidar_correction_file"  default="$(find hesai_lidar)/config/correction.csv"/>
+	<arg name="launch_driver" default="true"/>
+	<arg name="calibration"  default=""/>
 
 	<node pkg="hesai_lidar" name="hesai_lidar" type="hesai_lidar_node" output="screen" >
 	    <remap from="pandar_points" to="pointcloud_raw" />
 		<remap from="pandar_points_ex" to="pointcloud_raw_ex" />
-		<param name="pcap_file" type="string" value="$(arg pcap_file)"/>
-		<param name="server_ip" type="string" value="$(arg server_ip)"/>
-		<param name="lidar_recv_port"  type="int" value="$(arg lidar_recv_port)"/>
+		<param name="pcap" type="string" value="$(arg pcap)"/>
+		<param name="device_ip" type="string" value="$(arg device_ip)"/>
+		<param name="lidar_port"  type="int" value="$(arg lidar_port)"/>
 		<param name="gps_port"  type="int" value="$(arg gps_port)"/>
-		<param name="start_angle"  type="double" value="$(arg start_angle)"/>
+		<param name="scan_phase"  type="double" value="$(arg scan_phase)"/>
 		<param name="model"  type="string" value="$(arg model)"/>
 		<param name="frame_id"  type="string" value="$(arg frame_id)"/>
 		<param name="time_zone"  type="int" value="$(arg time_zone)"/>
-		<param name="pcldata_type"  type="int" value="$(arg pcldata_type)"/>
-		<param name="publish_type"  type="string" value="$(arg publish_type)"/>
+		<param name="calibration"  type="string" value="$(arg calibration)"/>
+		<param name="publish_packet" value="$(arg launch_driver)"/>
 		<param name="timestamp_type"  type="string" value="$(arg timestamp_type)"/>
-		<param name="data_type"  type="string" value="$(arg data_type)"/>
-		<param name="lidar_correction_file"  type="string" value="$(arg lidar_correction_file)"/>
 	</node>
 </launch>
