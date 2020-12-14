@@ -54,6 +54,7 @@ target_link_libraries(PandarGeneral
     ${PCL_IO_LIBRARIES}
     pcap
 )
+add_dependencies(PandarGeneral ${PROJECT_NAME}_generate_messages_cpp)
 
 ###PandarGeneralSDK
 add_library(PandarGeneralSDK SHARED
