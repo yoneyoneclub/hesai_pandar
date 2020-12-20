@@ -365,6 +365,7 @@ class PandarGeneral_Internal {
   float block40OffsetSingle_[BLOCKS_PER_PACKET];
   float block40OffsetDual_[BLOCKS_PER_PACKET];
   float laser40Offset_[LASER_COUNT];
+  std::array<size_t, LASER_COUNT> laser40Order_;
 
   float block20OffsetSingle_[HS_LIDAR_L20_BLOCK_NUMBER];
   float block20OffsetDual_[HS_LIDAR_L20_BLOCK_NUMBER];
