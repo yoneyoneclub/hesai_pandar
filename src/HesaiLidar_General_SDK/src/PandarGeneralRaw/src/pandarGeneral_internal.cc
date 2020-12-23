@@ -208,7 +208,7 @@ void PandarGeneral_Internal::Init() {
   laser40Offset_[37] = 28.47f;
   laser40Offset_[33] = 29.77f;
   laser40Offset_[5] = 31.74f;
-  laser40Offset_[21] = 31.7447f;
+  laser40Offset_[21] = 31.74f;
   laser40Offset_[9] = 33.71f;
   laser40Offset_[29] = 35.01f;
   laser40Offset_[17] = 36.98f;
@@ -223,8 +223,8 @@ void PandarGeneral_Internal::Init() {
   laser40Offset_[26] = 48.76f;
   laser40Offset_[14] = 50.73f;
   laser40Offset_[19] = 52.7f;
-  laser40Offset_[9] = 54.67f;
-  laser40Order_ = {9, 19, 14, 26, 6, 18, 4, 32, 36, 0, 10, 22, 17, 29, 9, 21, 5, 33, 37, 1, 13, 25, 20, 30, 12, 8, 24, 34, 38, 2, 16, 28, 23, 31, 15, 11, 27, 35, 39, 3};
+  laser40Offset_[7] = 54.67f;
+  laser40Order_ = {7, 19, 14, 26, 6, 18, 4, 32, 36, 0, 10, 22, 17, 29, 9, 21, 5, 33, 37, 1, 13, 25, 20, 30, 12, 8, 24, 34, 38, 2, 16, 28, 23, 31, 15, 11, 27, 35, 39, 3};
 
   //laser64 init the laser shot time offset, us
   // init the block time offset, us
