@@ -1265,7 +1265,7 @@ void PandarGeneral_Internal::CalcPointXYZIRADT(Pandar40PPacket *pkt, int blockid
 
     point.intensity = unit.intensity;
     point.ring = i;
-    point.azimuth = block->azimuth;
+    point.azimuth = block->azimuth + round(General_horizatal_azimuth_offset_map_[i] * 100.0f);
     point.distance = unit.distance;
 
     if ("realtime" == m_sTimestampType) {
@@ -1338,7 +1338,7 @@ void PandarGeneral_Internal::CalcPointXYZIRADT(HS_LIDAR_QT_Packet *pkt, int bloc
 
     point.intensity = unit.intensity;
     point.ring = i;
-    point.azimuth = block->azimuth;
+    point.azimuth = block->azimuth + round(General_horizatal_azimuth_offset_map_[i] * 100.0f);
     point.distance = unit.distance;
 
     if ("realtime" == m_sTimestampType) {
@@ -1416,7 +1416,7 @@ void PandarGeneral_Internal::CalcPointXYZIRADT(HS_LIDAR_L64_Packet *pkt, int blo
 
     point.intensity = unit.intensity;
     point.ring = i;
-    point.azimuth = block->azimuth;
+    point.azimuth = block->azimuth + round(General_horizatal_azimuth_offset_map_[i] * 100.0f);
     point.distance = unit.distance;
 
     if ("realtime" == m_sTimestampType) {
@@ -1494,7 +1494,7 @@ void PandarGeneral_Internal::CalcPointXYZIRADT(HS_LIDAR_L20_Packet *pkt, int blo
 
     point.intensity = unit.intensity;
     point.ring = i;
-    point.azimuth = block->azimuth;
+    point.azimuth = block->azimuth + round(General_horizatal_azimuth_offset_map_[i] * 100.0f);
     point.distance = unit.distance;
 
     if ("realtime" == m_sTimestampType) {
@@ -1579,7 +1579,7 @@ void PandarGeneral_Internal::CalcPointXYZIRADT(HS_LIDAR_XT_Packet *pkt, int bloc
 
     point.intensity = unit.intensity;
     point.ring = i;
-    point.azimuth = block->azimuth;
+    point.azimuth = block->azimuth + round(General_horizatal_azimuth_offset_map_[i] * 100.0f);
     point.distance = unit.distance;
 
     if ("realtime" == m_sTimestampType) {
