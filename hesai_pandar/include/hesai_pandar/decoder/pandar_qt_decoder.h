@@ -3,21 +3,21 @@
 #include <array>
 #include "hesai_pandar/calibration.h"
 #include "packet_decoder.h"
-#include "pandar40.h"
+#include "pandar_qt.h"
 
-namespace pandar40
+namespace pandar_qt
 {
-class Pandar40Decoder : public PacketDecoder
+class PandarQTDecoder : public PacketDecoder
 {
 public:
   enum class ReturnMode : int8_t {
     DUAL,
-    STRONGEST,
+    FIRST,
     LAST,
   };
   
-  Pandar40Decoder(
-    Calibration & calibration, float scan_phase = 0.0f, ReturnMode return_mode = ReturnMode::DUAL);
+  PandarQTDecoder(
+    Calibration & calibration, float scan_phase = 0.0f);
   void unpack(const pandar_msgs::PandarPacket & raw_packet) override;
   bool hasScanned() override;
   PointcloudXYZIRADT getPointcloud() override;
@@ -25,18 +25,14 @@ public:
 private:
   bool parsePacket(const pandar_msgs::PandarPacket & raw_packet);
   PointcloudXYZIRADT convert(const int block_id);
-  PointcloudXYZIRADT convert_dual(const int block_id);
 
-  std::array<float, LASER_COUNT> elev_angle_;
-  std::array<float, LASER_COUNT> azimuth_offset_;
+  std::array<float, UNIT_NUM> elev_angle_;
+  std::array<float, UNIT_NUM> azimuth_offset_;
 
-  std::array<float, LASER_COUNT> firing_offset_;
-  std::array<float, BLOCKS_PER_PACKET> block_offset_single_;
-  std::array<float, BLOCKS_PER_PACKET> block_offset_dual_;
+  std::array<float, UNIT_NUM> firing_offset_;
+  std::array<float, BLOCK_NUM> block_offset_single_;
+  std::array<float, BLOCK_NUM> block_offset_dual_;
 
-  std::array<size_t, LASER_COUNT> firing_order_;
-
-  ReturnMode return_mode_;
   Packet packet_;
 
   PointcloudXYZIRADT scan_pc_;

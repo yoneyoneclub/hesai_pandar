@@ -123,11 +123,15 @@ PointcloudXYZIRADT Pandar40Decoder::convert(int block_id)
 
 PointcloudXYZIRADT Pandar40Decoder::convert_dual(int block_id)
 {
+  //   Under the Dual Return mode, the measurements from each round of firing are stored in two adjacent blocks:
+  // · The odd number block is the last return, and the even number block is the strongest return
+  // · If the last and strongest returns coincide, the second strongest return will be placed in the even number block
+  // · The Azimuth changes every two blocks
   PointcloudXYZIRADT block_pc(new pcl::PointCloud<PointXYZIRADT>);
   double unix_second = static_cast<double>(timegm(&packet_.t));
   
-  auto head = block_id + ((return_mode_ == ReturnMode::SECOND) ? 1 : 0);
-  auto tail = block_id + ((return_mode_ == ReturnMode::FIRST) ? 1 : 2);
+  auto head = block_id + ((return_mode_ == ReturnMode::STRONGEST) ? 1 : 0);
+  auto tail = block_id + ((return_mode_ == ReturnMode::LAST) ? 1 : 2);
 
   for (auto unit_id : firing_order_){
     for(int i = head; i < tail; ++i){
@@ -170,7 +174,8 @@ bool Pandar40Decoder::parsePacket(const pandar_msgs::PandarPacket & raw_packet)
     return false;
   }
 
-  auto buf = raw_packet.data;
+  // auto buf = raw_packet.data;
+  const uint8_t* buf = &raw_packet.data[0];
 
   int index = 0;
   for (int i = 0; i < BLOCKS_PER_PACKET; i++) {

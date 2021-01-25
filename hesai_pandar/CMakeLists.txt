@@ -28,7 +28,6 @@ include_directories(
 )
 
 # Target
-## autoware_state_monitor_node
 add_executable(hesai_pandar
   src/hesai_pandar/main.cpp
   src/hesai_pandar/hesai_pandar_node.cpp
@@ -38,6 +37,7 @@ add_executable(hesai_pandar
   src/hesai_pandar/calibration.cpp
   src/hesai_pandar/pcap_input.cpp
   src/hesai_pandar/decoder/pandar40_decoder.cpp
+  src/hesai_pandar/decoder/pandar_qt_decoder.cpp
 )
 
 target_link_libraries(hesai_pandar

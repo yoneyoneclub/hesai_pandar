@@ -1,9 +1,10 @@
 #include "hesai_pandar/hesai_pandar_node.h"
 #include <pandar_msgs/PandarScan.h>
 #include "hesai_pandar/calibration.h"
-#include "hesai_pandar/decoder/pandar40_decoder.h"
 #include "hesai_pandar/pcap_input.h"
 #include "hesai_pandar/socket_input.h"
+#include "hesai_pandar/decoder/pandar40_decoder.h"
+#include "hesai_pandar/decoder/pandar_qt_decoder.h"
 
 namespace
 {
@@ -42,6 +43,8 @@ HesaiPandarNode::HesaiPandarNode() : nh_(""), private_nh_("~")
 
   if(model_ == "Pandar40P" || model_ == "Pandar40M"){
     decoder_ = std::make_shared<pandar40::Pandar40Decoder>(calibration_, scan_phase_, pandar40::Pandar40Decoder::ReturnMode::DUAL);
+  }else if(model_ == "PandarQT"){
+    decoder_ = std::make_shared<pandar_qt::PandarQTDecoder>(calibration_, scan_phase_);
   }else{
     // TODO : Add other models
     ROS_ERROR("Invalid model name");
