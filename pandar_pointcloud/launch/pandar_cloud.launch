@@ -1,0 +1,22 @@
+<launch>
+  <arg name="scan_phase"  default="0"/>
+  <arg name="model" default="Pandar40P"/>
+  <arg name="calibration"  default="$(find pandar_pointcloud)/config/40p.csv"/>
+  <arg name="manager" default="pandar_nodelet_manager"/>
+
+  <!-- <node pkg="pandar_pointcloud" name="pandar_cloud_node" type="pandar_cloud_node" output="screen" >
+    <param name="scan_phase"  type="double" value="$(arg scan_phase)"/>
+    <param name="model"  type="string" value="$(arg model)"/>
+  </node> -->
+
+
+  <!-- nodelet manager -->
+  <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" />
+
+  <!-- pandar cloud -->
+  <node pkg="nodelet" type="nodelet" name="$(arg manager)_cloud"
+        args="load pandar_pointcloud/CloudNodelet $(arg manager)">
+    <param name="scan_phase"  type="double" value="$(arg scan_phase)"/>
+    <param name="model"  type="string" value="$(arg model)"/>
+  </node>
+</launch>
