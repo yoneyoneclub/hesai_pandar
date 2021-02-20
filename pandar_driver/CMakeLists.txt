@@ -7,7 +7,6 @@ add_compile_options(-std=c++14)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   roslib
-  std_msgs
   nodelet
   pluginlib
   pandar_msgs

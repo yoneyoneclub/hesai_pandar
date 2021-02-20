@@ -45,11 +45,10 @@ last_pkt_ts_(0)
 
   std::stringstream filter;
   filter << "udp dst port " << port;
-  pcap_compile(pcap_, &pcap_filter_, filter.str().c_str(), 1, PCAP_NETMASK_UNKNOWN);
-  // if (pcap_compile(pcap_, &filter_, "udp", 0, 0xffffffff) == -1) {
-  //   printf("compile pcap file fail\n");
-  //   return;
-  // }
+  if (pcap_compile(pcap_, &pcap_filter_, filter.str().c_str(), 1, PCAP_NETMASK_UNKNOWN) == -1){
+    printf("compile pcap file fail\n");
+    return;
+  }
 
   if (pcap_setfilter(pcap_, &pcap_filter_) == -1) {
     printf("pcap set filter fail\n");

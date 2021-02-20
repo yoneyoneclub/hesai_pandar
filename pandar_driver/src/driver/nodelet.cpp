@@ -28,17 +28,14 @@ private:
   virtual void devicePoll(void);
 
   volatile bool running_;
-  // std::shared_ptr<std::thread> deviceThread_;
   std::thread deviceThread_;
   std::shared_ptr<PandarDriver> driver_;
 };
 
 void DriverNodelet::onInit()
 {
-  // start the driver
   driver_.reset(new PandarDriver(getNodeHandle(), getPrivateNodeHandle()));
 
-  // spawn device poll thread
   running_ = true;
   deviceThread_ = std::thread(&DriverNodelet::devicePoll, this);
 }

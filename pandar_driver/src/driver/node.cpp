@@ -10,7 +10,6 @@ int main(int argc, char * argv[])
 
   pandar_driver::PandarDriver driver(node, private_nh);
 
-  // loop until shut down or end of file
   while (ros::ok() && driver.poll()) {
     ros::spinOnce();
   }
