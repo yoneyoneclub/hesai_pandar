@@ -6,8 +6,9 @@
   <arg name="scan_phase"  default="0"/>
   <arg name="model" default="Pandar40P"/>
   <arg name="frame_id" default="pandar"/>
-
-  <!-- <node pkg="pandar_driver" name="pandar_driver" type="pandar_driver_node" output="screen" >
+  <arg name="manager" default="pandar_nodelet_manager"/>
+<!--
+  <node pkg="pandar_driver" name="pandar_driver" type="pandar_driver_node" output="screen" >
     <param name="pcap" type="string" value="$(arg pcap)"/>
     <param name="device_ip" type="string" value="$(arg device_ip)"/>
     <param name="lidar_port"  type="int" value="$(arg lidar_port)"/>
@@ -15,14 +16,13 @@
     <param name="scan_phase"  type="double" value="$(arg scan_phase)"/>
     <param name="model"  type="string" value="$(arg model)"/>
     <param name="frame_id"  type="string" value="$(arg frame_id)"/>
-  </node> -->
-
-  <arg name="manager" default="pandar_nodelet_manager"/>
+  </node>
+ -->
 
   <!-- nodelet manager -->
   <node pkg="nodelet" type="nodelet" name="$(arg manager)" args="manager" />
 
-  <!-- velodyne driver -->
+  <!-- pandar driver -->
   <node pkg="nodelet" type="nodelet" name="$(arg manager)_driver"
         args="load pandar_driver/DriverNodelet $(arg manager)">
     <param name="pcap" type="string" value="$(arg pcap)"/>
