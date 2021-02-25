@@ -20,7 +20,7 @@ catkin_package(
   CATKIN_DEPENDS
     pandar_msgs
   LIBRARIES
-    pandar_pointcloud
+    pandar_cloud
 )
 
 include_directories(

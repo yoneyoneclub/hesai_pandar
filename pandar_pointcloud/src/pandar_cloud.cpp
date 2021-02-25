@@ -21,6 +21,7 @@ PandarCloud::PandarCloud(ros::NodeHandle node, ros::NodeHandle private_nh)
   private_nh.getParam("scan_phase", scan_phase_);
   private_nh.getParam("calibration", calibration_path_);
   private_nh.getParam("model", model_);
+  private_nh.getParam("device_ip", device_ip_);
 
   pandar_packet_sub_ = node.subscribe(
     "pandar_packets", 10, &PandarCloud::onProcessScan, this,
@@ -28,6 +29,7 @@ PandarCloud::PandarCloud(ros::NodeHandle node, ros::NodeHandle private_nh)
   pandar_points_pub_ = node.advertise<sensor_msgs::PointCloud2>("pandar_points", 10);
   pandar_points_ex_pub_ = node.advertise<sensor_msgs::PointCloud2>("pandar_points_ex", 10);
 
+  tcp_client_ = std::make_shared<TcpCommandClient>(device_ip_, TCP_COMMAND_PORT);
   if (setupCalibration() != 0) {
     ROS_ERROR("Unable to load calibration data");
     return;
