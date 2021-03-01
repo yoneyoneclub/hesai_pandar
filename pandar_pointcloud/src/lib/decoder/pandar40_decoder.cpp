@@ -61,7 +61,7 @@ void Pandar40Decoder::unpack(const pandar_msgs::PandarPacket & raw_packet)
     has_scanned_ = false;
   }
 
-  bool dual_return = (packet_.echo == 0x39);
+  bool dual_return = (packet_.echo == DUAL_ECHO);
   auto step = dual_return ? 2 : 1;
 
   for (int block_id = 0; block_id < BLOCKS_PER_PACKET; block_id += step) {

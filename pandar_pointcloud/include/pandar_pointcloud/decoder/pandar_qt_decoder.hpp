@@ -18,7 +18,7 @@ public:
     LAST,
   };
 
-  PandarQTDecoder(Calibration & calibration, float scan_phase = 0.0f);
+  PandarQTDecoder(Calibration & calibration, float scan_phase = 0.0f, ReturnMode return_mode = ReturnMode::DUAL);
   void unpack(const pandar_msgs::PandarPacket & raw_packet) override;
   bool hasScanned() override;
   PointcloudXYZIRADT getPointcloud() override;
@@ -26,6 +26,7 @@ public:
 private:
   bool parsePacket(const pandar_msgs::PandarPacket & raw_packet);
   PointcloudXYZIRADT convert(const int block_id);
+  PointcloudXYZIRADT convert_dual(const int block_id);
 
   std::array<float, UNIT_NUM> elev_angle_;
   std::array<float, UNIT_NUM> azimuth_offset_;
@@ -34,6 +35,7 @@ private:
   std::array<float, BLOCK_NUM> block_offset_single_;
   std::array<float, BLOCK_NUM> block_offset_dual_;
 
+  ReturnMode return_mode_;
   Packet packet_;
 
   PointcloudXYZIRADT scan_pc_;

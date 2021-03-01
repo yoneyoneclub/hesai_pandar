@@ -11,7 +11,7 @@ namespace{
 namespace pandar_pointcloud{
 namespace pandar_qt{
 
-PandarQTDecoder::PandarQTDecoder(Calibration & calibration, float scan_phase)
+PandarQTDecoder::PandarQTDecoder(Calibration & calibration, float scan_phase, ReturnMode return_mode)
 {
   firing_offset_ = {
     12.31,  14.37,  16.43,  18.49,  20.54,  22.6,   24.66,  26.71,  29.16,  31.22,  33.28,
@@ -38,6 +38,7 @@ PandarQTDecoder::PandarQTDecoder(Calibration & calibration, float scan_phase)
   }
 
   scan_phase_ = static_cast<uint16_t>(scan_phase * 100.0f);
+  return_mode_ = return_mode;
 
   last_phase_ = 0;
   has_scanned_ = false;
@@ -69,12 +70,16 @@ void PandarQTDecoder::unpack(const pandar_msgs::PandarPacket & raw_packet)
     has_scanned_ = false;
   }
 
-  for (int block_id = 0; block_id < BLOCK_NUM; ++block_id) {
-    auto block_pc = convert(block_id);
-    int current_phase = (static_cast<int>(packet_.blocks[block_id].azimuth) - scan_phase_ + 36000) % 36000;
-    if(current_phase >= last_phase_ && !has_scanned_){
+  bool dual_return = (packet_.echo == DUAL_ECHO);
+  auto step = dual_return ? 2 : 1;
+
+  for (int block_id = 0; block_id < BLOCK_NUM; block_id += step) {
+    auto block_pc = dual_return ? convert_dual(block_id) : convert(block_id);
+    int current_phase =
+      (static_cast<int>(packet_.blocks[block_id].azimuth) - scan_phase_ + 36000) % 36000;
+    if (current_phase > last_phase_ && !has_scanned_) {
       *scan_pc_ += *block_pc;
-    }else{
+    } else {
       *overflow_pc_ += *block_pc;
       has_scanned_ = true;
     }
@@ -113,15 +118,53 @@ PointcloudXYZIRADT PandarQTDecoder::convert(const int block_id)
 
     point.time_stamp = unix_second + (static_cast<double>(packet_.usec)) / 1000000.0;
 
-    if(packet_.echo == 0x05){
-      point.time_stamp +=
-        (static_cast<double>(block_offset_dual_[block_id] + firing_offset_[unit_id]) / 1000000.0f);
-    }else{
-      point.time_stamp +=
-        (static_cast<double>(block_offset_single_[block_id] + firing_offset_[unit_id]) / 1000000.0f);
-    }
+    point.time_stamp +=
+      (static_cast<double>(block_offset_single_[block_id] + firing_offset_[unit_id]) / 1000000.0f);
 
     block_pc->push_back(point);
+  }
+  return block_pc;
+}
+
+PointcloudXYZIRADT PandarQTDecoder::convert_dual(const int block_id)
+{
+  PointcloudXYZIRADT block_pc(new pcl::PointCloud<PointXYZIRADT>);
+
+  // double unix_second = raw_packet.header.stamp.toSec() // system-time (packet receive time)
+  double unix_second = static_cast<double>(timegm(&packet_.t)); // sensor-time (ppt/gps)
+
+  auto head = block_id + ((return_mode_ == ReturnMode::FIRST) ? 1 : 0);
+  auto tail = block_id + ((return_mode_ == ReturnMode::LAST) ? 1 : 2);
+
+  for (size_t unit_id = 0; unit_id < UNIT_NUM; ++unit_id){
+    for (int i = head; i < tail; ++i) {
+      PointXYZIRADT point;
+      const auto & block = packet_.blocks[i];
+      const auto& unit = block.units[unit_id];
+      // skip invalid points
+      if (unit.distance <= 0.1 || unit.distance > 200.0) {
+        continue;
+      }
+      double xyDistance = unit.distance * cosf(deg2rad(elev_angle_[unit_id]));
+
+      point.x = static_cast<float>(
+        xyDistance * sinf(deg2rad(azimuth_offset_[unit_id] + (static_cast<double>(block.azimuth)) / 100.0)));
+      point.y = static_cast<float>(
+        xyDistance * cosf(deg2rad(azimuth_offset_[unit_id] + (static_cast<double>(block.azimuth)) / 100.0)));
+      point.z = static_cast<float>(unit.distance * sinf(deg2rad(elev_angle_[unit_id])));
+
+      point.intensity = unit.intensity;
+      point.distance = unit.distance;
+      point.ring = unit_id;
+      point.azimuth = block.azimuth + round(azimuth_offset_[unit_id] * 100.0f);
+
+      point.time_stamp = unix_second + (static_cast<double>(packet_.usec)) / 1000000.0;
+
+      point.time_stamp +=
+        (static_cast<double>(block_offset_dual_[block_id] + firing_offset_[unit_id]) / 1000000.0f);
+
+      block_pc->push_back(point);
+    }
   }
   return block_pc;
 }

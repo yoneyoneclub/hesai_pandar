@@ -34,6 +34,10 @@ constexpr size_t PACKET_SIZE = HEAD_SIZE + BODY_SIZE + PACKET_TAIL_SIZE;
 constexpr size_t PACKET_WITHOUT_UDPSEQ_SIZE =
   HEAD_SIZE + BODY_SIZE + PACKET_TAIL_WITHOUT_UDPSEQ_SIZE;
 
+constexpr uint32_t FIRST_ECHO = 0x33;
+constexpr uint32_t LAST_ECHO = 0x38;
+constexpr uint32_t DUAL_ECHO = 0x3B;
+
 struct Header
 {
   uint16_t sob;            // 0xFFEE 2bytes
