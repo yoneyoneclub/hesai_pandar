@@ -54,6 +54,7 @@ target_link_libraries(pandar_cloud_node
 ## add nodelet
 add_library(pandar_cloud_nodelet
   src/cloud_nodelet.cpp
+  src/pandar_cloud.cpp
 )
 
 target_link_libraries(pandar_cloud_nodelet
@@ -68,6 +69,7 @@ install(
   TARGETS
     pandar_cloud_node
     pandar_cloud_nodelet
+    pandar_cloud
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
