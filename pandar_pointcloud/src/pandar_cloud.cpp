@@ -11,7 +11,7 @@ namespace
 {
 const uint16_t TCP_COMMAND_PORT = 9347;
 const size_t TCP_RETRY_NUM = 5;
-const size_t TCP_RETRY_WAIT = 100;
+const size_t TCP_RETRY_WAIT = 10;
 }  // namespace
 
 namespace pandar_pointcloud
@@ -51,7 +51,9 @@ PandarCloud::~PandarCloud() {}
 
 int PandarCloud::setupCalibration()
 {
-  if (tcp_client_) {
+  if (!calibration_path_.empty() && calibration_.loadFile(calibration_path_) == 0) {
+    return 0;
+  } else if (tcp_client_) {
     std::string content("");
     for (size_t i = 0; i < TCP_RETRY_NUM; ++i) {
       auto ret = tcp_client_->getLidarCalibration(content);
@@ -63,12 +65,9 @@ int PandarCloud::setupCalibration()
     if (!content.empty()) {
       calibration_.loadContent(content);
       return 0;
+    }else{
+      return -1;
     }
-  }
-  if (!calibration_path_.empty() && calibration_.loadFile(calibration_path_) == 0) {
-    return 0;
-  } else {
-    return -1;
   }
 }
 
