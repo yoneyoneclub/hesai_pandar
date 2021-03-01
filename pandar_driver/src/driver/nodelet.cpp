@@ -15,12 +15,12 @@ public:
 
   ~DriverNodelet()
   {
-    if (running_) {
-      NODELET_INFO("shutting down driver thread");
-      running_ = false;
+    NODELET_INFO("shutting down driver thread");
+    running_ = false;
+    if(deviceThread_.joinable()){
       deviceThread_.join();
-      NODELET_INFO("driver thread stopped");
     }
+    NODELET_INFO("driver thread stopped");
   }
 
 private:
