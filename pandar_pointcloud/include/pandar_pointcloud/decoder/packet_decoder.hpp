@@ -12,7 +12,11 @@ class PacketDecoder
 public:
   virtual ~PacketDecoder(){};
   virtual void unpack(const pandar_msgs::PandarPacket & raw_packet) = 0;
+
+  // TODO: Remove this function
+  // In Hesai's original driver, the decoder controls how many packets are used, but now the pandar_driver controls it.
   virtual bool hasScanned() = 0;
+
   virtual PointcloudXYZIRADT getPointcloud() = 0;
 };
 }  // namespace pandar_pointcloud
