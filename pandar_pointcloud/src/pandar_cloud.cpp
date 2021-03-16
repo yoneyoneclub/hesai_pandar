@@ -64,6 +64,9 @@ bool PandarCloud::setupCalibration()
     }
     if (!content.empty()) {
       calibration_.loadContent(content);
+      if(!calibration_path_.empty()){
+        calibration_.saveFile(calibration_path_);
+      }
       return true;
     }else{
       return false;
