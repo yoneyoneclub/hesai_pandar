@@ -11,7 +11,7 @@ namespace
 {
 const uint16_t TCP_COMMAND_PORT = 9347;
 const size_t TCP_RETRY_NUM = 5;
-const size_t TCP_RETRY_WAIT = 10;
+const double TCP_RETRY_WAIT_SEC = 0.1;
 }  // namespace
 
 namespace pandar_pointcloud
@@ -30,7 +30,7 @@ PandarCloud::PandarCloud(ros::NodeHandle node, ros::NodeHandle private_nh)
   pandar_points_ex_pub_ = node.advertise<sensor_msgs::PointCloud2>("pandar_points_ex", 10);
 
   tcp_client_ = std::make_shared<TcpCommandClient>(device_ip_, TCP_COMMAND_PORT);
-  if (setupCalibration() != 0) {
+  if (!setupCalibration()) {
     ROS_ERROR("Unable to load calibration data");
     return;
   }
@@ -49,10 +49,10 @@ PandarCloud::PandarCloud(ros::NodeHandle node, ros::NodeHandle private_nh)
 
 PandarCloud::~PandarCloud() {}
 
-int PandarCloud::setupCalibration()
+bool PandarCloud::setupCalibration()
 {
   if (!calibration_path_.empty() && calibration_.loadFile(calibration_path_) == 0) {
-    return 0;
+    return true;
   } else if (tcp_client_) {
     std::string content("");
     for (size_t i = 0; i < TCP_RETRY_NUM; ++i) {
@@ -60,13 +60,13 @@ int PandarCloud::setupCalibration()
       if (ret == TcpCommandClient::PTC_ErrCode::PTC_ERROR_NO_ERROR) {
         break;
       }
-      std::this_thread::sleep_for(std::chrono::milliseconds(TCP_RETRY_WAIT));
+      ros::Duration(TCP_RETRY_WAIT_SEC).sleep();
     }
     if (!content.empty()) {
       calibration_.loadContent(content);
-      return 0;
+      return true;
     }else{
-      return -1;
+      return false;
     }
   }
 }

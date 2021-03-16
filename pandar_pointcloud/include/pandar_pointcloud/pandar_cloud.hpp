@@ -18,7 +18,7 @@ public:
   ~PandarCloud();
 
 private:
-  int setupCalibration();
+  bool setupCalibration();
   void onProcessScan(const pandar_msgs::PandarScan::ConstPtr & msg);
   pcl::PointCloud<PointXYZIR>::Ptr convertPointcloud(
     const pcl::PointCloud<PointXYZIRADT>::ConstPtr & input_pointcloud);
