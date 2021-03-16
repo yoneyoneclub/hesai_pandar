@@ -27,12 +27,16 @@ PandarDriver::PandarDriver(ros::NodeHandle node, ros::NodeHandle private_nh)
 
   if(model_ == "Pandar40P" || model_ == "Pandar40M"){
     azimuth_index_ = 2; // 2 + 124 * [0-9]
+    is_valid_packet_ = [](size_t packet_size){ return (packet_size == 1262 || packet_size == 1266);};
   }else if(model_ == "PandarQT"){
     azimuth_index_ = 12; // 12 + 258 * [0-3]
+    is_valid_packet_ = [](size_t packet_size){ return (packet_size == 1072);};
   }else if(model_ == "Pandar64"){
     azimuth_index_ = 8; // 8 + 192 * [0-5]
+    is_valid_packet_ = [](size_t packet_size){ return (packet_size == 1194 || packet_size == 1198);};
   }else if(model_ == "Pandar128"){
     azimuth_index_ = 12; // 12 + 386 * [0-1]
+    is_valid_packet_ = [](size_t packet_size){ return (packet_size == 812);};
   }else{
     ROS_ERROR("Invalid model name");
   }
@@ -42,11 +46,11 @@ bool PandarDriver::poll(void){
   int scan_phase = static_cast<int>(scan_phase_ * 100.0);
 
   pandar_msgs::PandarScanPtr scan(new pandar_msgs::PandarScan);
-  for(int prev_phase = 0;;){ // ~finish scan
-    while(true){ // ~receive lidar packet 
+  for(int prev_phase = 0;;){ // finish scan
+    while(true){ // until receive lidar packet 
       pandar_msgs::PandarPacket packet;
       int packet_type = input_->getPacket(&packet);
-      if (packet_type == 0) {
+      if (packet_type == 0 && is_valid_packet_(packet.size)) {
         scan->packets.push_back(packet);
         break;
       } else if(packet_type == -1){

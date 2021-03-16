@@ -25,5 +25,7 @@ private:
 
   ros::Publisher pandar_packet_pub_;
   std::shared_ptr<Input> input_;
+
+  std::function<bool(size_t)> is_valid_packet_;
 };
 }  // namespace pandar_driver
