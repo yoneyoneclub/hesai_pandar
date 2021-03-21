@@ -33,6 +33,7 @@
     <remap from="pandar_points_ex" to="pointcloud_raw_ex" />
     <param name="scan_phase" type="double" value="$(arg scan_phase)"/>
     <param name="model" type="string" value="$(arg model)"/>
+    <param name="device_ip" type="string" value="$(arg device_ip)"/>
     <param name="calibration" type="string" value="$(arg calibration)"/>
   </node>
 </launch>
