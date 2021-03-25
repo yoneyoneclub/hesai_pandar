@@ -1,2 +1,2 @@
-# HesaiLidar_General_ROS
+# hesai_pandar
 
