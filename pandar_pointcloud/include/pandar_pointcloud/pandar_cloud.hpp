@@ -19,9 +19,8 @@ public:
 
 private:
   bool setupCalibration();
-  void onProcessScan(const pandar_msgs::PandarScan::ConstPtr & msg);
-  pcl::PointCloud<PointXYZIR>::Ptr convertPointcloud(
-    const pcl::PointCloud<PointXYZIRADT>::ConstPtr & input_pointcloud);
+  void onProcessScan(const pandar_msgs::PandarScan::ConstPtr& msg);
+  pcl::PointCloud<PointXYZIR>::Ptr convertPointcloud(const pcl::PointCloud<PointXYZIRADT>::ConstPtr& input_pointcloud);
 
   std::string model_;
   std::string device_ip_;
@@ -31,7 +30,7 @@ private:
   ros::Subscriber pandar_packet_sub_;
   ros::Publisher pandar_points_pub_;
   ros::Publisher pandar_points_ex_pub_;
-  
+
   std::shared_ptr<PacketDecoder> decoder_;
   std::shared_ptr<TcpCommandClient> tcp_client_;
   Calibration calibration_;

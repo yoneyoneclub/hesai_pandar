@@ -4,9 +4,11 @@
 
 namespace pandar_pointcloud
 {
-Calibration::Calibration() {}
+Calibration::Calibration()
+{
+}
 
-int Calibration::loadFile(const std::string & calibration_file)
+int Calibration::loadFile(const std::string& calibration_file)
 {
   std::ifstream ifs(calibration_file);
   if (!ifs) {
@@ -29,7 +31,7 @@ int Calibration::loadFile(const std::string & calibration_file)
   return 0;
 }
 
-int Calibration::loadContent(const std::string & calibration_content)
+int Calibration::loadContent(const std::string& calibration_content)
 {
   std::stringstream ss;
   ss << calibration_content;
@@ -49,14 +51,14 @@ int Calibration::loadContent(const std::string & calibration_content)
   return 0;
 }
 
-int Calibration::saveFile(const std::string & calibration_file)
+int Calibration::saveFile(const std::string& calibration_file)
 {
   std::ofstream ofs(calibration_file);
   if (!ofs) {
     return -1;
   }
   ofs << "Laser id,Elevation,Azimuth" << std::endl;
-  for (const auto & pair : elev_angle_map) {
+  for (const auto& pair : elev_angle_map) {
     int laser_id = pair.first + 1;
     float elevation = pair.second;
     float azimuth = azimuth_offset_map[pair.first];

@@ -23,9 +23,10 @@ namespace pandar_pointcloud
 class TcpCommandClient
 {
 public:
-  TcpCommandClient(const std::string & ip, const uint16_t port);
+  TcpCommandClient(const std::string& ip, const uint16_t port);
 
-  enum PTC_ErrCode : uint8_t {
+  enum PTC_ErrCode : uint8_t
+  {
     PTC_ERROR_NO_ERROR = 0,
     PTC_ERROR_BAD_PARAMETER,
     PTC_ERROR_CONNECT_SERVER_FAILED,
@@ -33,13 +34,14 @@ public:
     PTC_ERROR_NO_MEMORY,
   };
 
-  PTC_ErrCode setCalibration(const std::string & content);
-  PTC_ErrCode getCalibration(std::string & content);
-  PTC_ErrCode getLidarCalibration(std::string & content);
+  PTC_ErrCode setCalibration(const std::string& content);
+  PTC_ErrCode getCalibration(std::string& content);
+  PTC_ErrCode getLidarCalibration(std::string& content);
   PTC_ErrCode resetCalibration();
 
 private:
-  enum PTC_COMMAND : uint8_t {
+  enum PTC_COMMAND : uint8_t
+  {
     PTC_COMMAND_GET_CALIBRATION = 0,
     PTC_COMMAND_SET_CALIBRATION,
     PTC_COMMAND_HEARTBEAT,
@@ -58,8 +60,8 @@ private:
   struct TC_Command
   {
     TcpCommandHeader header;
-    uint8_t * data;
-    uint8_t * ret_data;
+    uint8_t* data;
+    uint8_t* ret_data;
     uint32_t ret_size;
   };
 
@@ -69,10 +71,10 @@ private:
   std::string ip_;
   uint16_t port_;
 
-  int parseHeader(unsigned char * buffer, int len, TcpCommandHeader * header);
-  int readCommand(int connfd, TC_Command * cmd);
-  int buildHeader(char * buffer, TC_Command * cmd);
-  PTC_ErrCode sendCmd(TC_Command * cmd);
+  int parseHeader(unsigned char* buffer, int len, TcpCommandHeader* header);
+  int readCommand(int connfd, TC_Command* cmd);
+  int buildHeader(char* buffer, TC_Command* cmd);
+  PTC_ErrCode sendCmd(TC_Command* cmd);
 };
 
 }  // namespace pandar_pointcloud

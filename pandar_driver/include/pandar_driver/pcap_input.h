@@ -27,7 +27,7 @@ public:
   PcapInput(uint16_t port, uint16_t gps_port, std::string path, std::string model);
   ~PcapInput();
 
-  int getPacket(pandar_msgs::PandarPacket * pandar_pkt) override;
+  int getPacket(pandar_msgs::PandarPacket* pandar_pkt) override;
 
 private:
   void initTimeIndexMap();
@@ -37,7 +37,7 @@ private:
   int utc_index_;
   std::map<std::string, std::pair<int, int>> time_index_map_;
 
-  pcap_t * pcap_;
+  pcap_t* pcap_;
   char errbuf_[PCAP_ERRBUF_SIZE];
   bpf_program pcap_filter_;
 

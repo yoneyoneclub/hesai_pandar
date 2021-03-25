@@ -14,10 +14,8 @@ const uint8_t PKT_HEADER_SIZE = 42;
 const size_t LIMIT_PACKET_NUM = 100;
 }  // namespace
 
-
-PcapInput::PcapInput(uint16_t port, uint16_t gps_port, std::string path, std::string model):
-pcap_(nullptr),
-last_pkt_ts_(0)
+PcapInput::PcapInput(uint16_t port, uint16_t gps_port, std::string path, std::string model)
+  : pcap_(nullptr), last_pkt_ts_(0)
 {
   initTimeIndexMap();
   pcap_path_ = path;
@@ -26,8 +24,8 @@ last_pkt_ts_(0)
   if (iter != time_index_map_.end()) {
     ts_index_ = iter->second.first;
     utc_index_ = iter->second.second;
-
-  } else {
+  }
+  else {
     ts_index_ = 0;
     utc_index_ = 0;
   }
@@ -45,7 +43,7 @@ last_pkt_ts_(0)
 
   std::stringstream filter;
   filter << "udp dst port " << port;
-  if (pcap_compile(pcap_, &pcap_filter_, filter.str().c_str(), 1, PCAP_NETMASK_UNKNOWN) == -1){
+  if (pcap_compile(pcap_, &pcap_filter_, filter.str().c_str(), 1, PCAP_NETMASK_UNKNOWN) == -1) {
     printf("compile pcap file fail\n");
     return;
   }
@@ -63,29 +61,20 @@ PcapInput::~PcapInput()
 
 void PcapInput::initTimeIndexMap()
 {
-  time_index_map_.insert(
-    std::pair<std::string, std::pair<int, int>>("Pandar40P", std::pair<int, int>(1250, 1256)));
-  time_index_map_.insert(
-    std::pair<std::string, std::pair<int, int>>("Pandar40M", std::pair<int, int>(1250, 1256)));
-  time_index_map_.insert(
-    std::pair<std::string, std::pair<int, int>>("Pandar64", std::pair<int, int>(1182, 1188)));
-  time_index_map_.insert(
-    std::pair<std::string, std::pair<int, int>>("PandarQT", std::pair<int, int>(1056, 1062)));
-  time_index_map_.insert(
-    std::pair<std::string, std::pair<int, int>>("Pandar20A", std::pair<int, int>(1258, 1264)));
-  time_index_map_.insert(
-    std::pair<std::string, std::pair<int, int>>("Pandar20B", std::pair<int, int>(1258, 1264)));
-  time_index_map_.insert(
-    std::pair<std::string, std::pair<int, int>>("PandarXT-32", std::pair<int, int>(1071, 1065)));
-  time_index_map_.insert(
-    std::pair<std::string, std::pair<int, int>>("PandarXT-16", std::pair<int, int>(559, 553)));
+  time_index_map_.insert(std::pair<std::string, std::pair<int, int>>("Pandar40P", std::pair<int, int>(1250, 1256)));
+  time_index_map_.insert(std::pair<std::string, std::pair<int, int>>("Pandar40M", std::pair<int, int>(1250, 1256)));
+  time_index_map_.insert(std::pair<std::string, std::pair<int, int>>("Pandar64", std::pair<int, int>(1182, 1188)));
+  time_index_map_.insert(std::pair<std::string, std::pair<int, int>>("PandarQT", std::pair<int, int>(1056, 1062)));
+  time_index_map_.insert(std::pair<std::string, std::pair<int, int>>("Pandar20A", std::pair<int, int>(1258, 1264)));
+  time_index_map_.insert(std::pair<std::string, std::pair<int, int>>("Pandar20B", std::pair<int, int>(1258, 1264)));
+  time_index_map_.insert(std::pair<std::string, std::pair<int, int>>("PandarXT-32", std::pair<int, int>(1071, 1065)));
+  time_index_map_.insert(std::pair<std::string, std::pair<int, int>>("PandarXT-16", std::pair<int, int>(559, 553)));
 }
 
-
-int PcapInput::getPacket(pandar_msgs::PandarPacket *pandar_pkt)
+int PcapInput::getPacket(pandar_msgs::PandarPacket* pandar_pkt)
 {
-  pcap_pkthdr * pkt_header;
-  const uint8_t * pkt_data;
+  pcap_pkthdr* pkt_header;
+  const uint8_t* pkt_data;
   int64_t current_time;
   int64_t pkt_ts = 0;
 
@@ -94,18 +83,17 @@ int PcapInput::getPacket(pandar_msgs::PandarPacket *pandar_pkt)
       if (pcap_offline_filter(&pcap_filter_, pkt_header, pkt_data) == 0) {
         continue;
       }
-      const uint8_t * packet = pkt_data + PKT_HEADER_SIZE;
+      const uint8_t* packet = pkt_data + PKT_HEADER_SIZE;
       int pkt_size = pkt_header->len - PKT_HEADER_SIZE;
       pandar_pkt->stamp = ros::Time::now();
       pandar_pkt->size = pkt_size;
       std::memcpy(&pandar_pkt->data[0], packet, pkt_size);
 
-
       packet_count_++;
       // Sleep
       if (packet_count_ >= LIMIT_PACKET_NUM && utc_index_ != 0) {
         packet_count_ = 0;
-        
+
         struct tm t;
         t.tm_year = packet[utc_index_];
         t.tm_mon = packet[utc_index_ + 1] - 1;
@@ -115,9 +103,9 @@ int PcapInput::getPacket(pandar_msgs::PandarPacket *pandar_pkt)
         t.tm_sec = packet[utc_index_ + 5];
         t.tm_isdst = 0;
 
-        pkt_ts = mktime(&t) * 1000000 +
-                 ((packet[ts_index_] & 0xff) | (packet[ts_index_ + 1] & 0xff) << 8 |
-                  ((packet[ts_index_ + 2] & 0xff) << 16) | ((packet[ts_index_ + 3] & 0xff) << 24));
+        pkt_ts =
+            mktime(&t) * 1000000 + ((packet[ts_index_] & 0xff) | (packet[ts_index_ + 1] & 0xff) << 8 |
+                                    ((packet[ts_index_ + 2] & 0xff) << 16) | ((packet[ts_index_ + 3] & 0xff) << 24));
         struct timeval sys_time;
         gettimeofday(&sys_time, nullptr);
         current_time = sys_time.tv_sec * 1000000 + sys_time.tv_usec;
@@ -125,7 +113,8 @@ int PcapInput::getPacket(pandar_msgs::PandarPacket *pandar_pkt)
         if (0 == last_pkt_ts_) {
           last_pkt_ts_ = pkt_ts;
           last_time_ = current_time;
-        } else {
+        }
+        else {
           int64_t sleep_time = (pkt_ts - last_pkt_ts_) - (current_time - last_time_);
           if (sleep_time > 0) {
             struct timeval waitTime;
@@ -145,10 +134,9 @@ int PcapInput::getPacket(pandar_msgs::PandarPacket *pandar_pkt)
         }
       }
       return 0;
-    }else{
+    }
+    else {
       return -1;
     }
   }
 }
-
-

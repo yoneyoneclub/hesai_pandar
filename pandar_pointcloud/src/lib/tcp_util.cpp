@@ -37,13 +37,13 @@
 
 namespace pandar_pointcloud
 {
-int sys_readn(int fd, void * vptr, int n)
+int sys_readn(int fd, void* vptr, int n)
 {
   // printf("start sys_readn: %d....\n", n);
   int nleft, nread;
-  char * ptr;
+  char* ptr;
 
-  ptr = (char *)vptr;
+  ptr = (char*)vptr;
   nleft = n;
   while (nleft > 0) {
     // printf("start read\n");
@@ -52,7 +52,8 @@ int sys_readn(int fd, void * vptr, int n)
         nread = 0;
       else
         return -1;
-    } else if (nread == 0) {
+    }
+    else if (nread == 0) {
       break;
     }
     // printf("end read, read: %d\n", nread);
@@ -64,13 +65,13 @@ int sys_readn(int fd, void * vptr, int n)
   return n - nleft;
 }
 
-int sys_writen(int fd, const void * vptr, int n)
+int sys_writen(int fd, const void* vptr, int n)
 {
   int nleft;
   int nwritten;
-  const char * ptr;
+  const char* ptr;
 
-  ptr = (char *)vptr;
+  ptr = (char*)vptr;
   nleft = n;
   while (nleft > 0) {
     if ((nwritten = write(fd, ptr, nleft)) <= 0) {
@@ -87,12 +88,13 @@ int sys_writen(int fd, const void * vptr, int n)
   return n;
 }
 
-int tcp_open(const char * ipaddr, int port)
+int tcp_open(const char* ipaddr, int port)
 {
   int sockfd;
   struct sockaddr_in servaddr;
 
-  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) return -1;
+  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1)
+    return -1;
 
   bzero(&servaddr, sizeof(servaddr));
   servaddr.sin_family = AF_INET;
@@ -102,7 +104,7 @@ int tcp_open(const char * ipaddr, int port)
     return -1;
   }
 
-  if (connect(sockfd, (struct sockaddr *)&servaddr, sizeof(servaddr)) == -1) {
+  if (connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) == -1) {
     close(sockfd);
     return -1;
   }

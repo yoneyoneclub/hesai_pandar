@@ -42,7 +42,7 @@
 
 namespace pandar_pointcloud
 {
-TcpCommandClient::TcpCommandClient(const std::string & ip, const unsigned short port)
+TcpCommandClient::TcpCommandClient(const std::string& ip, const unsigned short port)
 {
   // if (!ip) {
   //   printf("Bad Parameter\n");
@@ -54,7 +54,7 @@ TcpCommandClient::TcpCommandClient(const std::string & ip, const unsigned short 
   pthread_mutex_init(&lock_, NULL);
 }
 
-TcpCommandClient::PTC_ErrCode TcpCommandClient::sendCmd(TC_Command * cmd)
+TcpCommandClient::PTC_ErrCode TcpCommandClient::sendCmd(TC_Command* cmd)
 {
   if (!cmd) {
     return PTC_ERROR_BAD_PARAMETER;
@@ -72,7 +72,7 @@ TcpCommandClient::PTC_ErrCode TcpCommandClient::sendCmd(TC_Command * cmd)
   }
 
   unsigned char buffer[128];
-  int size = buildHeader((char *)buffer, cmd);
+  int size = buildHeader((char*)buffer, cmd);
 
   int ret = write(fd, buffer, size);
   if (ret != size) {
@@ -107,13 +107,13 @@ TcpCommandClient::PTC_ErrCode TcpCommandClient::sendCmd(TC_Command * cmd)
   return PTC_ERROR_NO_ERROR;
 }
 
-TcpCommandClient::PTC_ErrCode TcpCommandClient::setCalibration(const std::string & content)
+TcpCommandClient::PTC_ErrCode TcpCommandClient::setCalibration(const std::string& content)
 {
   TC_Command cmd;
   memset(&cmd, 0, sizeof(TC_Command));
   cmd.header.cmd = PTC_COMMAND_SET_CALIBRATION;
   cmd.header.len = content.size();
-  cmd.data = (unsigned char *)strdup(content.c_str());
+  cmd.data = (unsigned char*)strdup(content.c_str());
 
   PTC_ErrCode errorCode = sendCmd(&cmd);
   if (errorCode != PTC_ERROR_NO_ERROR) {
@@ -130,7 +130,7 @@ TcpCommandClient::PTC_ErrCode TcpCommandClient::setCalibration(const std::string
   return (PTC_ErrCode)cmd.header.ret_code;
 }
 
-TcpCommandClient::PTC_ErrCode TcpCommandClient::getCalibration(std::string & content)
+TcpCommandClient::PTC_ErrCode TcpCommandClient::getCalibration(std::string& content)
 {
   TC_Command cmd;
   memset(&cmd, 0, sizeof(TC_Command));
@@ -143,7 +143,7 @@ TcpCommandClient::PTC_ErrCode TcpCommandClient::getCalibration(std::string & con
     return errorCode;
   }
 
-  char * ret_str = (char *)malloc(cmd.ret_size + 1);
+  char* ret_str = (char*)malloc(cmd.ret_size + 1);
   memcpy(ret_str, cmd.ret_data, cmd.ret_size);
   ret_str[cmd.ret_size] = '\0';
 
@@ -157,7 +157,7 @@ TcpCommandClient::PTC_ErrCode TcpCommandClient::getCalibration(std::string & con
   return (PTC_ErrCode)cmd.header.ret_code;
 }
 
-TcpCommandClient::PTC_ErrCode TcpCommandClient::getLidarCalibration(std::string & content)
+TcpCommandClient::PTC_ErrCode TcpCommandClient::getLidarCalibration(std::string& content)
 {
   TC_Command cmd;
   memset(&cmd, 0, sizeof(TC_Command));
@@ -170,7 +170,7 @@ TcpCommandClient::PTC_ErrCode TcpCommandClient::getLidarCalibration(std::string 
     return errorCode;
   }
 
-  char * ret_str = (char *)malloc(cmd.ret_size + 1);
+  char* ret_str = (char*)malloc(cmd.ret_size + 1);
   memcpy(ret_str, cmd.ret_data, cmd.ret_size);
   ret_str[cmd.ret_size] = '\0';
   free(cmd.ret_data);
@@ -202,7 +202,7 @@ TcpCommandClient::PTC_ErrCode TcpCommandClient::resetCalibration()
   return (PTC_ErrCode)cmd.header.ret_code;
 }
 
-int TcpCommandClient::parseHeader(unsigned char * buffer, int len, TcpCommandHeader * header)
+int TcpCommandClient::parseHeader(unsigned char* buffer, int len, TcpCommandHeader* header)
 {
   int index = 0;
   header->cmd = buffer[index++];
@@ -212,7 +212,7 @@ int TcpCommandClient::parseHeader(unsigned char * buffer, int len, TcpCommandHea
   return 0;
 }
 
-int TcpCommandClient::readCommand(int connfd, TC_Command * cmd)
+int TcpCommandClient::readCommand(int connfd, TC_Command* cmd)
 {
   int ret = 0;
   if (!cmd) {
@@ -235,7 +235,7 @@ int TcpCommandClient::readCommand(int connfd, TC_Command * cmd)
   parseHeader(buffer + 2, 6, &cmd->header);
 
   if (cmd->header.len > 0) {
-    cmd->data = (unsigned char *)malloc(cmd->header.len);
+    cmd->data = (unsigned char*)malloc(cmd->header.len);
     if (!cmd->data) {
       printf("malloc data error\n");
       return -1;
@@ -252,7 +252,7 @@ int TcpCommandClient::readCommand(int connfd, TC_Command * cmd)
   return 0;
 }
 
-int TcpCommandClient::buildHeader(char * buffer, TC_Command * cmd)
+int TcpCommandClient::buildHeader(char* buffer, TC_Command* cmd)
 {
   if (!buffer) {
     return -1;

@@ -1,8 +1,7 @@
 #include <ros/ros.h>
 #include <pandar_driver/pandar_driver.h>
 
-
-int main(int argc, char * argv[])
+int main(int argc, char* argv[])
 {
   ros::init(argc, argv, "pandar_driver_node");
   ros::NodeHandle node;

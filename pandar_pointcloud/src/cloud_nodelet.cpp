@@ -10,8 +10,12 @@ namespace pandar_pointcloud
 class CloudNodelet : public nodelet::Nodelet
 {
 public:
-  CloudNodelet() {}
-  ~CloudNodelet() {}
+  CloudNodelet()
+  {
+  }
+  ~CloudNodelet()
+  {
+  }
 
 private:
   virtual void onInit(void);

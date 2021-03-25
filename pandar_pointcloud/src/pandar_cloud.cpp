@@ -30,30 +30,34 @@ PandarCloud::PandarCloud(ros::NodeHandle node, ros::NodeHandle private_nh)
   }
 
   if (model_ == "Pandar40P" || model_ == "Pandar40M") {
-    decoder_ = std::make_shared<pandar40::Pandar40Decoder>(
-      calibration_, scan_phase_, pandar40::Pandar40Decoder::ReturnMode::DUAL);
-  } else if (model_ == "PandarQT") {
+    decoder_ = std::make_shared<pandar40::Pandar40Decoder>(calibration_, scan_phase_,
+                                                           pandar40::Pandar40Decoder::ReturnMode::DUAL);
+  }
+  else if (model_ == "PandarQT") {
     decoder_ = std::make_shared<pandar_qt::PandarQTDecoder>(calibration_, scan_phase_);
-  } else {
+  }
+  else {
     // TODO : Add other models
     ROS_ERROR("Invalid model name");
     return;
   }
 
-  pandar_packet_sub_ = node.subscribe(
-    "pandar_packets", 10, &PandarCloud::onProcessScan, this,
-    ros::TransportHints().tcpNoDelay(true));
+  pandar_packet_sub_ =
+      node.subscribe("pandar_packets", 10, &PandarCloud::onProcessScan, this, ros::TransportHints().tcpNoDelay(true));
   pandar_points_pub_ = node.advertise<sensor_msgs::PointCloud2>("pandar_points", 10);
   pandar_points_ex_pub_ = node.advertise<sensor_msgs::PointCloud2>("pandar_points_ex", 10);
 }
 
-PandarCloud::~PandarCloud() {}
+PandarCloud::~PandarCloud()
+{
+}
 
 bool PandarCloud::setupCalibration()
 {
   if (!calibration_path_.empty() && calibration_.loadFile(calibration_path_) == 0) {
     return true;
-  } else if (tcp_client_) {
+  }
+  else if (tcp_client_) {
     std::string content("");
     for (size_t i = 0; i < TCP_RETRY_NUM; ++i) {
       auto ret = tcp_client_->getLidarCalibration(content);
@@ -64,28 +68,28 @@ bool PandarCloud::setupCalibration()
     }
     if (!content.empty()) {
       calibration_.loadContent(content);
-      if(!calibration_path_.empty()){
+      if (!calibration_path_.empty()) {
         calibration_.saveFile(calibration_path_);
       }
       return true;
-    }else{
+    }
+    else {
       return false;
     }
   }
 }
 
-void PandarCloud::onProcessScan(const pandar_msgs::PandarScan::ConstPtr & scan_msg)
+void PandarCloud::onProcessScan(const pandar_msgs::PandarScan::ConstPtr& scan_msg)
 {
   PointcloudXYZIRADT pointcloud;
   pandar_msgs::PandarPacket pkt;
 
-  for (auto & packet : scan_msg->packets) {
+  for (auto& packet : scan_msg->packets) {
     decoder_->unpack(packet);
     if (decoder_->hasScanned()) {
       pointcloud = decoder_->getPointcloud();
-      if(pointcloud->points.size() > 0){
-        pointcloud->header.stamp =
-          pcl_conversions::toPCL(ros::Time(pointcloud->points[0].time_stamp));
+      if (pointcloud->points.size() > 0) {
+        pointcloud->header.stamp = pcl_conversions::toPCL(ros::Time(pointcloud->points[0].time_stamp));
         pointcloud->header.frame_id = scan_msg->header.frame_id;
         pointcloud->height = 1;
 
@@ -98,13 +102,13 @@ void PandarCloud::onProcessScan(const pandar_msgs::PandarScan::ConstPtr & scan_m
   }
 }
 
-pcl::PointCloud<PointXYZIR>::Ptr PandarCloud::convertPointcloud(
-  const pcl::PointCloud<PointXYZIRADT>::ConstPtr & input_pointcloud)
+pcl::PointCloud<PointXYZIR>::Ptr
+PandarCloud::convertPointcloud(const pcl::PointCloud<PointXYZIRADT>::ConstPtr& input_pointcloud)
 {
   pcl::PointCloud<PointXYZIR>::Ptr output_pointcloud(new pcl::PointCloud<PointXYZIR>);
   output_pointcloud->reserve(input_pointcloud->points.size());
   PointXYZIR point;
-  for (const auto & p : input_pointcloud->points) {
+  for (const auto& p : input_pointcloud->points) {
     point.x = p.x;
     point.y = p.y;
     point.z = p.z;

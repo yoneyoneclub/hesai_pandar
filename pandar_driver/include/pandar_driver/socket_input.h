@@ -27,7 +27,7 @@ class SocketInput : public Input
 public:
   SocketInput(uint16_t port, uint16_t gpsPort);
   ~SocketInput();
-  int getPacket(pandar_msgs::PandarPacket * pkt) override;
+  int getPacket(pandar_msgs::PandarPacket* pkt) override;
 
 private:
   int socketForLidar;

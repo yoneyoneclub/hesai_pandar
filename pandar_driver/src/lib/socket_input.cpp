@@ -31,11 +31,13 @@
 
 using namespace pandar_driver;
 
-namespace{
-  const size_t ETHERNET_MTU = 1500;
+namespace
+{
+const size_t ETHERNET_MTU = 1500;
 }
 
-SocketInput::SocketInput(uint16_t port, uint16_t gpsPort) {
+SocketInput::SocketInput(uint16_t port, uint16_t gpsPort)
+{
   // LOG_D("port: %d, gpsPort: %d", port,gpsPort);
   socketForLidar = -1;
   socketForLidar = socket(PF_INET, SOCK_DGRAM, 0);
@@ -50,8 +52,7 @@ SocketInput::SocketInput(uint16_t port, uint16_t gpsPort) {
   myAddress.sin_port = htons(port);          // port in network byte order
   myAddress.sin_addr.s_addr = INADDR_ANY;    // automatically fill in my IP
 
-  if (bind(socketForLidar, reinterpret_cast<sockaddr *>(&myAddress),
-           sizeof(sockaddr)) == -1) {
+  if (bind(socketForLidar, reinterpret_cast<sockaddr*>(&myAddress), sizeof(sockaddr)) == -1) {
     perror("bind");  // TODO(Philip.Pi): perror errno
     return;
   }
@@ -77,10 +78,9 @@ SocketInput::SocketInput(uint16_t port, uint16_t gpsPort) {
   memset(&myAddressGPS, 0, sizeof(myAddressGPS));  // initialize to zeros
   myAddressGPS.sin_family = AF_INET;               // host byte order
   myAddressGPS.sin_port = htons(gpsPort);          // port in network byte order
-  myAddressGPS.sin_addr.s_addr = INADDR_ANY;  // automatically fill in my IP
+  myAddressGPS.sin_addr.s_addr = INADDR_ANY;       // automatically fill in my IP
 
-  if (bind(socketForGPS, reinterpret_cast<sockaddr *>(&myAddressGPS),
-           sizeof(sockaddr)) == -1) {
+  if (bind(socketForGPS, reinterpret_cast<sockaddr*>(&myAddressGPS), sizeof(sockaddr)) == -1) {
     perror("bind");  // TODO(Philip.Pi): perror errno
     return;
   }
@@ -92,15 +92,19 @@ SocketInput::SocketInput(uint16_t port, uint16_t gpsPort) {
   socketNumber = 2;
 }
 
-SocketInput::~SocketInput(void) {
-  if (socketForGPS > 0) close(socketForGPS);
-  if (socketForLidar > 0) (void)close(socketForLidar);
+SocketInput::~SocketInput(void)
+{
+  if (socketForGPS > 0)
+    close(socketForGPS);
+  if (socketForLidar > 0)
+    (void)close(socketForLidar);
 }
 
 // return : 0 - lidar
 //          1 - gps
 //          -1 - error
-int SocketInput::getPacket(pandar_msgs::PandarPacket *pkt) {
+int SocketInput::getPacket(pandar_msgs::PandarPacket* pkt)
+{
   struct pollfd fds[socketNumber];
   if (socketNumber == 2) {
     fds[0].fd = socketForGPS;
@@ -108,7 +112,8 @@ int SocketInput::getPacket(pandar_msgs::PandarPacket *pkt) {
 
     fds[1].fd = socketForLidar;
     fds[1].events = POLLIN;
-  } else if (socketNumber == 1) {
+  }
+  else if (socketNumber == 1) {
     fds[0].fd = socketForLidar;
     fds[0].events = POLLIN;
   }
@@ -118,14 +123,14 @@ int SocketInput::getPacket(pandar_msgs::PandarPacket *pkt) {
   socklen_t senderAddressLen = sizeof(senderAddress);
   int retval = poll(fds, socketNumber, POLL_TIMEOUT);
   if (retval < 0) {  // poll() error?
-    if (errno != EINTR) printf("poll() error: %s", strerror(errno));
+    if (errno != EINTR)
+      printf("poll() error: %s", strerror(errno));
     return -1;
   }
   if (retval == 0) {
     return -1;
   }
-  if ((fds[0].revents & POLLERR) || (fds[0].revents & POLLHUP) ||
-      (fds[0].revents & POLLNVAL)) {
+  if ((fds[0].revents & POLLERR) || (fds[0].revents & POLLHUP) || (fds[0].revents & POLLNVAL)) {
     // device error?
     perror("poll() reports Pandar error");
     return -1;
@@ -137,8 +142,7 @@ int SocketInput::getPacket(pandar_msgs::PandarPacket *pkt) {
   // double time = getNowTimeSec();
   for (int i = 0; i != socketNumber; ++i) {
     if (fds[i].revents & POLLIN) {
-      nbytes = recvfrom(fds[i].fd, &pkt->data[0], ETHERNET_MTU, 0,
-                        reinterpret_cast<sockaddr *>(&senderAddress),
+      nbytes = recvfrom(fds[i].fd, &pkt->data[0], ETHERNET_MTU, 0, reinterpret_cast<sockaddr*>(&senderAddress),
                         &senderAddressLen);
       break;
     }

@@ -7,6 +7,6 @@ class Input
 {
 public:
   virtual ~Input(){};
-  virtual int getPacket(pandar_msgs::PandarPacket * pkt) = 0;
+  virtual int getPacket(pandar_msgs::PandarPacket* pkt) = 0;
 };
 }  // namespace pandar_driver

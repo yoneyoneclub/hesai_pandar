@@ -11,13 +11,15 @@ namespace pandar_driver
 class DriverNodelet : public nodelet::Nodelet
 {
 public:
-  DriverNodelet() : running_(false) {}
+  DriverNodelet() : running_(false)
+  {
+  }
 
   ~DriverNodelet()
   {
     NODELET_INFO("shutting down driver thread");
     running_ = false;
-    if(deviceThread_.joinable()){
+    if (deviceThread_.joinable()) {
       deviceThread_.join();
     }
     NODELET_INFO("driver thread stopped");
@@ -44,7 +46,8 @@ void DriverNodelet::devicePoll()
 {
   while (ros::ok()) {
     running_ = driver_->poll();
-    if (!running_) break;
+    if (!running_)
+      break;
   }
   running_ = false;
 }

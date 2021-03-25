@@ -18,8 +18,7 @@ constexpr size_t FACTORY_INFO_SIZE = 1;
 constexpr size_t ECHO_SIZE = 1;
 constexpr size_t RESERVE_SIZE = 8;
 constexpr size_t REVOLUTION_SIZE = 2;
-constexpr size_t INFO_SIZE =
-  TIMESTAMP_SIZE + FACTORY_INFO_SIZE + ECHO_SIZE + RESERVE_SIZE + REVOLUTION_SIZE;
+constexpr size_t INFO_SIZE = TIMESTAMP_SIZE + FACTORY_INFO_SIZE + ECHO_SIZE + RESERVE_SIZE + REVOLUTION_SIZE;
 constexpr size_t UTC_TIME = 6;
 constexpr size_t PACKET_SIZE = BLOCK_SIZE * BLOCKS_PER_PACKET + INFO_SIZE + UTC_TIME;
 constexpr size_t SEQ_NUM_SIZE = 4;

@@ -18,7 +18,7 @@ constexpr size_t UNIT_NUM = 64;
 constexpr size_t UNIT_SIZE = 4;
 constexpr size_t BLOCK_SIZE = UNIT_SIZE * UNIT_NUM + BLOCK_HEADER_AZIMUTH;
 constexpr size_t BODY_SIZE = BLOCK_SIZE * BLOCK_NUM;
-//Tail
+// Tail
 constexpr size_t RESERVED_SIZE = 10;
 constexpr size_t ENGINE_VELOCITY = 2;
 constexpr size_t TIMESTAMP_SIZE = 4;
@@ -31,8 +31,7 @@ constexpr size_t PACKET_TAIL_WITHOUT_UDPSEQ_SIZE = 24;
 
 // All
 constexpr size_t PACKET_SIZE = HEAD_SIZE + BODY_SIZE + PACKET_TAIL_SIZE;
-constexpr size_t PACKET_WITHOUT_UDPSEQ_SIZE =
-  HEAD_SIZE + BODY_SIZE + PACKET_TAIL_WITHOUT_UDPSEQ_SIZE;
+constexpr size_t PACKET_WITHOUT_UDPSEQ_SIZE = HEAD_SIZE + BODY_SIZE + PACKET_TAIL_WITHOUT_UDPSEQ_SIZE;
 
 constexpr uint32_t FIRST_ECHO = 0x33;
 constexpr uint32_t LAST_ECHO = 0x38;
