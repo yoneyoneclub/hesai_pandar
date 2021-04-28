@@ -23,7 +23,7 @@ PandarQTDecoder::PandarQTDecoder(Calibration& calibration, float scan_phase, Ret
     123.43, 125.49, 127.54, 129.6,  132.05, 134.11, 136.17, 138.22, 140.28, 142.34, 144.39, 146.45,
   };
 
-  for (int block = 0; block < BLOCK_NUM; ++block) {
+  for (size_t block = 0; block < BLOCK_NUM; ++block) {
     block_offset_single_[block] = 25.71f + 500.00f / 3.0f * block;
     block_offset_dual_[block] = 25.71f + 500.00f / 3.0f * (block / 2);
   }
@@ -57,7 +57,7 @@ PointcloudXYZIRADT PandarQTDecoder::getPointcloud()
   return scan_pc_;
 }
 
-void PandarQTDecoder::unpack(const pandar_msgs::PandarPacket& raw_packet)
+void PandarQTDecoder::unpack(const pandar_msgs::msg::PandarPacket& raw_packet)
 {
   if (!parsePacket(raw_packet)) {
     return;
@@ -72,7 +72,7 @@ void PandarQTDecoder::unpack(const pandar_msgs::PandarPacket& raw_packet)
   bool dual_return = (packet_.echo == DUAL_ECHO);
   auto step = dual_return ? 2 : 1;
 
-  for (int block_id = 0; block_id < BLOCK_NUM; block_id += step) {
+  for (size_t block_id = 0; block_id < BLOCK_NUM; block_id += step) {
     auto block_pc = dual_return ? convert_dual(block_id) : convert(block_id);
     int current_phase = (static_cast<int>(packet_.blocks[block_id].azimuth) - scan_phase_ + 36000) % 36000;
     if (current_phase > last_phase_ && !has_scanned_) {
@@ -166,7 +166,7 @@ PointcloudXYZIRADT PandarQTDecoder::convert_dual(const int block_id)
   return block_pc;
 }
 
-bool PandarQTDecoder::parsePacket(const pandar_msgs::PandarPacket& raw_packet)
+bool PandarQTDecoder::parsePacket(const pandar_msgs::msg::PandarPacket& raw_packet)
 {
   if (raw_packet.size != PACKET_SIZE && raw_packet.size != PACKET_WITHOUT_UDPSEQ_SIZE) {
     return false;
@@ -189,7 +189,7 @@ bool PandarQTDecoder::parsePacket(const pandar_msgs::PandarPacket& raw_packet)
     return false;
   }
 
-  for (size_t block = 0; block < packet_.header.chBlockNumber; block++) {
+  for (size_t block = 0; block < static_cast<size_t>(packet_.header.chBlockNumber); block++) {
     packet_.blocks[block].azimuth = (buf[index] & 0xff) | ((buf[index + 1] & 0xff) << 8);
     index += BLOCK_HEADER_AZIMUTH;
 

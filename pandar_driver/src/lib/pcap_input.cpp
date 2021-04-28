@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <map>
 #include <cstring>
+#include <sstream>
 #include "pandar_driver/pcap_input.h"
 
 using namespace pandar_driver;
@@ -14,8 +15,8 @@ const uint8_t PKT_HEADER_SIZE = 42;
 const size_t LIMIT_PACKET_NUM = 100;
 }  // namespace
 
-PcapInput::PcapInput(uint16_t port, uint16_t gps_port, std::string path, std::string model)
-  : pcap_(nullptr), last_pkt_ts_(0)
+PcapInput::PcapInput(rclcpp::Node * node, uint16_t port, uint16_t gps_port, std::string path, std::string model)
+  : clock_(node->get_clock()), logger_(node->get_logger()), pcap_(nullptr), last_pkt_ts_(0)
 {
   initTimeIndexMap();
   pcap_path_ = path;
@@ -71,7 +72,7 @@ void PcapInput::initTimeIndexMap()
   time_index_map_.insert(std::pair<std::string, std::pair<int, int>>("PandarXT-16", std::pair<int, int>(559, 553)));
 }
 
-int PcapInput::getPacket(pandar_msgs::PandarPacket* pandar_pkt)
+int PcapInput::getPacket(pandar_msgs::msg::PandarPacket* pandar_pkt)
 {
   pcap_pkthdr* pkt_header;
   const uint8_t* pkt_data;
@@ -85,7 +86,7 @@ int PcapInput::getPacket(pandar_msgs::PandarPacket* pandar_pkt)
       }
       const uint8_t* packet = pkt_data + PKT_HEADER_SIZE;
       int pkt_size = pkt_header->len - PKT_HEADER_SIZE;
-      pandar_pkt->stamp = ros::Time::now();
+      pandar_pkt->stamp = clock_->now();
       pandar_pkt->size = pkt_size;
       std::memcpy(&pandar_pkt->data[0], packet, pkt_size);
 

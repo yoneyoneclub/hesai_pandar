@@ -83,7 +83,7 @@ TcpCommandClient::PTC_ErrCode TcpCommandClient::sendCmd(TC_Command* cmd)
 
   if (cmd->header.len > 0 && cmd->data) {
     ret = write(fd, cmd->data, cmd->header.len);
-    if (ret != cmd->header.len) {
+    if (ret != static_cast<int>(cmd->header.len)) {
       close(fd);
       pthread_mutex_unlock(&lock_);
       return PTC_ERROR_TRANSFER_FAILED;
@@ -243,7 +243,7 @@ int TcpCommandClient::readCommand(int connfd, TC_Command* cmd)
   }
 
   ret = sys_readn(connfd, cmd->data, cmd->header.len);
-  if (ret != cmd->header.len) {
+  if (ret != static_cast<int>(cmd->header.len)) {
     free(cmd->data);
     printf("Server Read failed\n");
     return -1;

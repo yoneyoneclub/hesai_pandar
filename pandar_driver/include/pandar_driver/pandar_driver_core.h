@@ -1,18 +1,21 @@
 #pragma once
 
-#include <ros/ros.h>
+#include <rclcpp/rclcpp.hpp>
+#include <pandar_msgs/msg/pandar_scan.hpp>
 
 namespace pandar_driver
 {
 class Input;
-class PandarDriver
+class PandarDriverCore
 {
 public:
-  PandarDriver(ros::NodeHandle node, ros::NodeHandle private_nh);
-  ~PandarDriver(){};
+  PandarDriverCore(rclcpp::Node *node);
+  ~PandarDriverCore(){};
   bool poll(void);
 
 private:
+  rclcpp::Node * node_;
+
   std::string device_ip_;
   int lidar_port_;
   int gps_port_;
@@ -23,7 +26,7 @@ private:
   std::string frame_id_;
   std::string pcap_path_;
 
-  ros::Publisher pandar_packet_pub_;
+  rclcpp::Publisher<pandar_msgs::msg::PandarScan>::SharedPtr pandar_packet_pub_;
   std::shared_ptr<Input> input_;
 
   std::function<bool(size_t)> is_valid_packet_;

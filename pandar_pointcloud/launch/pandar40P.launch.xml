@@ -6,9 +6,9 @@
   <arg name="lidar_port"  default="2368"/>
   <arg name="gps_port"  default="10110"/>
   <arg name="scan_phase"  default="0.0"/>
-  <arg name="model" default="PandarQT"/>
+  <arg name="model" default="Pandar40P"/>
   <arg name="frame_id" default="pandar"/>
-  <arg name="calibration" default="$(find-pkg-share pandar_pointcloud)/config/qt.csv"/>
+  <arg name="calibration" default="$(find-pkg-share pandar_pointcloud)/config/40p.csv"/>
 
   <!-- pandar driver -->
   <node pkg="pandar_driver" exec="pandar_driver_node" name="pandar_driver" output="screen" >

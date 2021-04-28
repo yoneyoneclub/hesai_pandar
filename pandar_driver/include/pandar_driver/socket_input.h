@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <rclcpp/rclcpp.hpp>
 #include <netinet/in.h>
 #include <string>
 #include "pandar_driver/input.h"
@@ -25,11 +26,14 @@ namespace pandar_driver
 class SocketInput : public Input
 {
 public:
-  SocketInput(uint16_t port, uint16_t gpsPort);
+  SocketInput(rclcpp::Node * node, uint16_t port, uint16_t gpsPort);
   ~SocketInput();
-  int getPacket(pandar_msgs::PandarPacket* pkt) override;
+  int getPacket(pandar_msgs::msg::PandarPacket* pkt) override;
 
 private:
+  rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Logger logger_;
+  
   int socketForLidar;
   int socketForGPS;
   int socketNumber;

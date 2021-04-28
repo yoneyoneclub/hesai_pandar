@@ -1,9 +1,10 @@
 #include "pandar_pointcloud/pandar_cloud.hpp"
-#include <pandar_msgs/PandarScan.h>
+#include <pandar_msgs/msg/pandar_scan.hpp>
 #include "pandar_pointcloud/calibration.hpp"
 #include "pandar_pointcloud/decoder/pandar40_decoder.hpp"
 #include "pandar_pointcloud/decoder/pandar_qt_decoder.hpp"
 
+#include <pcl_conversions/pcl_conversions.h>
 #include <chrono>
 #include <thread>
 
@@ -12,20 +13,27 @@ namespace
 const uint16_t TCP_COMMAND_PORT = 9347;
 const size_t TCP_RETRY_NUM = 5;
 const double TCP_RETRY_WAIT_SEC = 0.1;
+
+inline std::chrono::nanoseconds toChronoNanoSeconds(const double seconds)
+{
+  return std::chrono::duration_cast<std::chrono::nanoseconds>(
+          std::chrono::duration<double>(seconds));
+}
 }  // namespace
 
 namespace pandar_pointcloud
 {
-PandarCloud::PandarCloud(ros::NodeHandle node, ros::NodeHandle private_nh)
+PandarCloud::PandarCloud(const rclcpp::NodeOptions & options)
+: Node("pandar_cloud_node", options)
 {
-  private_nh.getParam("scan_phase", scan_phase_);
-  private_nh.getParam("calibration", calibration_path_);
-  private_nh.getParam("model", model_);
-  private_nh.getParam("device_ip", device_ip_);
+  scan_phase_ = declare_parameter("scan_phase", 0.0);
+  calibration_path_ = declare_parameter("calibration", "");
+  model_ = declare_parameter("model", "");
+  device_ip_ = declare_parameter("device_ip","");
 
   tcp_client_ = std::make_shared<TcpCommandClient>(device_ip_, TCP_COMMAND_PORT);
   if (!setupCalibration()) {
-    ROS_ERROR("Unable to load calibration data");
+    RCLCPP_WARN(get_logger(), "Unable to load calibration data");
     return;
   }
 
@@ -38,14 +46,17 @@ PandarCloud::PandarCloud(ros::NodeHandle node, ros::NodeHandle private_nh)
   }
   else {
     // TODO : Add other models
-    ROS_ERROR("Invalid model name");
+    RCLCPP_WARN(get_logger(), "Invalid model name");
     return;
   }
 
   pandar_packet_sub_ =
-      node.subscribe("pandar_packets", 10, &PandarCloud::onProcessScan, this, ros::TransportHints().tcpNoDelay(true));
-  pandar_points_pub_ = node.advertise<sensor_msgs::PointCloud2>("pandar_points", 10);
-  pandar_points_ex_pub_ = node.advertise<sensor_msgs::PointCloud2>("pandar_points_ex", 10);
+    create_subscription<pandar_msgs::msg::PandarScan>(
+    "pandar_packets", rclcpp::SensorDataQoS(),
+    std::bind(&PandarCloud::onProcessScan, this, std::placeholders::_1));
+
+  pandar_points_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("pandar_points", rclcpp::SensorDataQoS());
+  pandar_points_ex_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>("pandar_points_ex", rclcpp::SensorDataQoS());
 }
 
 PandarCloud::~PandarCloud()
@@ -64,7 +75,7 @@ bool PandarCloud::setupCalibration()
       if (ret == TcpCommandClient::PTC_ErrCode::PTC_ERROR_NO_ERROR) {
         break;
       }
-      ros::Duration(TCP_RETRY_WAIT_SEC).sleep();
+      rclcpp::Rate(1.0/TCP_RETRY_WAIT_SEC).sleep();
     }
     if (!content.empty()) {
       calibration_.loadContent(content);
@@ -77,25 +88,37 @@ bool PandarCloud::setupCalibration()
       return false;
     }
   }
+  return false;
 }
 
-void PandarCloud::onProcessScan(const pandar_msgs::PandarScan::ConstPtr& scan_msg)
+void PandarCloud::onProcessScan(const pandar_msgs::msg::PandarScan::SharedPtr scan_msg)
 {
   PointcloudXYZIRADT pointcloud;
-  pandar_msgs::PandarPacket pkt;
+  pandar_msgs::msg::PandarPacket pkt;
 
   for (auto& packet : scan_msg->packets) {
     decoder_->unpack(packet);
     if (decoder_->hasScanned()) {
       pointcloud = decoder_->getPointcloud();
       if (pointcloud->points.size() > 0) {
-        pointcloud->header.stamp = pcl_conversions::toPCL(ros::Time(pointcloud->points[0].time_stamp));
+        double first_point_timestamp = pointcloud->points.front().time_stamp;
+        // RCLCPP_WARN(get_logger(), "%f", first_point_timestamp);
+        // pointcloud->header = pcl_conversions::toPCL(scan_msg->header);
+        // pointcloud->header.stamp = pcl_conversions::toPCL(rclcpp::Time(toChronoNanoSeconds(first_point_timestamp).count()) - rclcpp::Duration(0.0));
         pointcloud->header.frame_id = scan_msg->header.frame_id;
-        pointcloud->height = 1;
-
-        pandar_points_ex_pub_.publish(pointcloud);
-        if (pandar_points_pub_.getNumSubscribers() > 0) {
-          pandar_points_pub_.publish(convertPointcloud(pointcloud));
+        // pointcloud->height = 1;
+        if (pandar_points_pub_->get_subscription_count() > 0) {
+          const auto pointcloud_raw = convertPointcloud(pointcloud);
+          auto ros_pc_msg_ptr = std::make_unique<sensor_msgs::msg::PointCloud2>();
+          pcl::toROSMsg(*pointcloud_raw, *ros_pc_msg_ptr);
+          ros_pc_msg_ptr->header.stamp = rclcpp::Time(toChronoNanoSeconds(first_point_timestamp).count()) - rclcpp::Duration(0.0);
+          pandar_points_pub_->publish(std::move(ros_pc_msg_ptr));
+        }
+        {
+          auto ros_pc_msg_ptr = std::make_unique<sensor_msgs::msg::PointCloud2>();
+          pcl::toROSMsg(*pointcloud, *ros_pc_msg_ptr);
+          ros_pc_msg_ptr->header.stamp = rclcpp::Time(toChronoNanoSeconds(first_point_timestamp).count()) - rclcpp::Duration(0.0);
+          pandar_points_ex_pub_->publish(std::move(ros_pc_msg_ptr));
         }
       }
     }

@@ -17,6 +17,7 @@
 
 #include <pcap.h>
 #include <string>
+#include <rclcpp/rclcpp.hpp>
 #include "pandar_driver/input.h"
 
 namespace pandar_driver
@@ -24,12 +25,15 @@ namespace pandar_driver
 class PcapInput : public Input
 {
 public:
-  PcapInput(uint16_t port, uint16_t gps_port, std::string path, std::string model);
+  PcapInput(rclcpp::Node * node, uint16_t port, uint16_t gps_port, std::string path, std::string model);
   ~PcapInput();
 
-  int getPacket(pandar_msgs::PandarPacket* pandar_pkt) override;
+  int getPacket(pandar_msgs::msg::PandarPacket* pandar_pkt) override;
 
 private:
+  rclcpp::Clock::SharedPtr clock_;
+  rclcpp::Logger logger_;
+
   void initTimeIndexMap();
   std::string pcap_path_;
   std::string frame_id_;

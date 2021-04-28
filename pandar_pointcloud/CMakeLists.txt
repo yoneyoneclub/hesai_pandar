@@ -1,35 +1,28 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(pandar_pointcloud)
 
-add_compile_options(-std=c++14)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wno-unused-parameter -Wall -Wextra -Wpedantic -Werror)
+endif()
 
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  roslib
-  nodelet
-  pluginlib
-  pcl_conversions
-  pcl_ros
-  sensor_msgs
-  pandar_msgs
-)
-
-catkin_package(
-  INCLUDE_DIRS
-    include
-  CATKIN_DEPENDS
-    pandar_msgs
-  LIBRARIES
-    pandar_cloud
-)
+find_package(ament_cmake_auto REQUIRED)
+find_package(PCL REQUIRED COMPONENTS common)
+find_package(PCL REQUIRED)
+find_package(pcl_conversions REQUIRED)
+ament_auto_find_build_dependencies()
 
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
+  ${PCL_COMMON_INCLUDE_DIRS}
 )
 
-# Target
-add_library(pandar_cloud
+ament_auto_add_library(pandar_cloud SHARED
   src/pandar_cloud.cpp
   src/lib/calibration.cpp
   src/lib/tcp_command_client.cpp
@@ -37,62 +30,21 @@ add_library(pandar_cloud
   src/lib/decoder/pandar40_decoder.cpp
   src/lib/decoder/pandar_qt_decoder.cpp
 )
-target_link_libraries(pandar_cloud
-  ${catkin_LIBRARIES}
-)
-
-## add node
-add_executable(pandar_cloud_node
-  src/cloud_node.cpp
-)
-
-target_link_libraries(pandar_cloud_node
-  pandar_cloud  
-  ${catkin_LIBRARIES}
-)
-
-## add nodelet
-add_library(pandar_cloud_nodelet
-  src/cloud_nodelet.cpp
-  src/pandar_cloud.cpp
-)
-
-target_link_libraries(pandar_cloud_nodelet
-  pandar_cloud
-  ${catkin_LIBRARIES}
-)
 
 
-# Install
-## executables and libraries
-install(
-  TARGETS
-    pandar_cloud_node
-    pandar_cloud_nodelet
-    pandar_cloud
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+rclcpp_components_register_node(pandar_cloud
+  PLUGIN "pandar_pointcloud::PandarCloud"
+  EXECUTABLE pandar_cloud_node
 )
 
-## files
-install(
-  FILES
-    nodelet_pandar_pointcloud.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
+ament_auto_package(
+  INSTALL_TO_SHARE
+  launch
+  config
 )
 
-## project namespaced headers
-install(
-  DIRECTORY
-    include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
-
-## directories
-install(
-  DIRECTORY
-    launch
-    config
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)

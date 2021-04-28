@@ -1,93 +1,42 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.5)
 project(pandar_driver)
 
-add_compile_options(-std=c++14)
+if(NOT CMAKE_CXX_STANDARD)
+  set(CMAKE_CXX_STANDARD 14)
+  set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
+endif()
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options(-Wno-unused-parameter -Wall -Wextra -Wpedantic -Werror)
+endif()
 
-
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  roslib
-  nodelet
-  pluginlib
-  pandar_msgs
-)
-
-catkin_package(
-  INCLUDE_DIRS
-    include
-  CATKIN_DEPENDS
-    pandar_msgs
-  LIBRARIES
-    pandar_input
-)
+find_package(ament_cmake_auto REQUIRED)
+ament_auto_find_build_dependencies()
 
 include_directories(
   include
-  ${catkin_INCLUDE_DIRS}
 )
 
-# Target
-add_library(pandar_input
+ament_auto_add_library(pandar_driver SHARED
+  src/driver/pandar_driver.cpp
+  src/driver/pandar_driver_core.cpp
   src/lib/socket_input.cpp
   src/lib/pcap_input.cpp
 )
-target_link_libraries(pandar_input
-  pcap
-  ${catkin_LIBRARIES}
+target_link_libraries(pandar_driver pcap)
+
+
+rclcpp_components_register_node(pandar_driver
+  PLUGIN "pandar_driver::PandarDriver"
+  EXECUTABLE pandar_driver_node
 )
 
-## add node
-add_executable(pandar_driver_node
-  src/driver/node.cpp
-  src/driver/pandar_driver.cpp
-)
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
 
-target_link_libraries(pandar_driver_node
-  pandar_input  
-  ${catkin_LIBRARIES}
-)
-
-## add nodelet
-add_library(pandar_driver_nodelet
-  src/driver/nodelet.cpp
-  src/driver/pandar_driver.cpp
-)
-
-target_link_libraries(pandar_driver_nodelet
-  pandar_input
-  ${catkin_LIBRARIES}
-)
-
-
-# Install
-## executables and libraries
-install(
-  TARGETS
-    pandar_driver_node
-    pandar_driver_nodelet
-    pandar_input
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-
-## files
-install(
-  FILES
-    nodelet_pandar_driver.xml
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
-
-## project namespaced headers
-install(
-  DIRECTORY
-    include/${PROJECT_NAME}/
-  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
-)
-
-## directories
-install(
-  DIRECTORY
-    launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+ament_auto_package(
+  INSTALL_TO_SHARE
+  launch
 )

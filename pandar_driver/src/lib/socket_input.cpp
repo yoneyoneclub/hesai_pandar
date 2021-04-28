@@ -36,7 +36,8 @@ namespace
 const size_t ETHERNET_MTU = 1500;
 }
 
-SocketInput::SocketInput(uint16_t port, uint16_t gpsPort)
+SocketInput::SocketInput(rclcpp::Node * node, uint16_t port, uint16_t gpsPort)
+: clock_(node->get_clock()), logger_(node->get_logger())
 {
   // LOG_D("port: %d, gpsPort: %d", port,gpsPort);
   socketForLidar = -1;
@@ -103,9 +104,10 @@ SocketInput::~SocketInput(void)
 // return : 0 - lidar
 //          1 - gps
 //          -1 - error
-int SocketInput::getPacket(pandar_msgs::PandarPacket* pkt)
+int SocketInput::getPacket(pandar_msgs::msg::PandarPacket* pkt)
 {
-  struct pollfd fds[socketNumber];
+  // struct pollfd fds[socketNumber];
+  std::vector<pollfd> fds(socketNumber);
   if (socketNumber == 2) {
     fds[0].fd = socketForGPS;
     fds[0].events = POLLIN;
@@ -121,7 +123,7 @@ int SocketInput::getPacket(pandar_msgs::PandarPacket* pkt)
 
   sockaddr_in senderAddress;
   socklen_t senderAddressLen = sizeof(senderAddress);
-  int retval = poll(fds, socketNumber, POLL_TIMEOUT);
+  int retval = poll(fds.data(), socketNumber, POLL_TIMEOUT);
   if (retval < 0) {  // poll() error?
     if (errno != EINTR)
       printf("poll() error: %s", strerror(errno));
@@ -137,8 +139,8 @@ int SocketInput::getPacket(pandar_msgs::PandarPacket* pkt)
   }
 
   senderAddressLen = sizeof(senderAddress);
-  ssize_t nbytes;
-  pkt->stamp = ros::Time::now();
+  ssize_t nbytes(0);
+  pkt->stamp = clock_->now();
   // double time = getNowTimeSec();
   for (int i = 0; i != socketNumber; ++i) {
     if (fds[i].revents & POLLIN) {
