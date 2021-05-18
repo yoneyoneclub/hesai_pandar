@@ -19,6 +19,8 @@ namespace pandar_pointcloud
 PandarCloud::PandarCloud(ros::NodeHandle node, ros::NodeHandle private_nh)
 {
   private_nh.getParam("scan_phase", scan_phase_);
+  private_nh.getParam("return_mode", return_mode_);
+  private_nh.getParam("dual_return_distance_threshold", dual_return_distance_threshold_);
   private_nh.getParam("calibration", calibration_path_);
   private_nh.getParam("model", model_);
   private_nh.getParam("device_ip", device_ip_);
@@ -30,11 +32,36 @@ PandarCloud::PandarCloud(ros::NodeHandle node, ros::NodeHandle private_nh)
   }
 
   if (model_ == "Pandar40P" || model_ == "Pandar40M") {
+    pandar40::Pandar40Decoder::ReturnMode selected_return_mode;
+    if (return_mode_ == "Strongest")
+      selected_return_mode = pandar40::Pandar40Decoder::ReturnMode::STRONGEST;
+    else if (return_mode_ == "Last")
+      selected_return_mode = pandar40::Pandar40Decoder::ReturnMode::LAST;
+    else if (return_mode_ == "Dual")
+      selected_return_mode = pandar40::Pandar40Decoder::ReturnMode::DUAL;
+    else {
+      ROS_ERROR("Invalid return mode, defaulting to strongest return mode"); 
+      selected_return_mode = pandar40::Pandar40Decoder::ReturnMode::STRONGEST;
+    }
     decoder_ = std::make_shared<pandar40::Pandar40Decoder>(calibration_, scan_phase_,
-                                                           pandar40::Pandar40Decoder::ReturnMode::DUAL);
+                                                           dual_return_distance_threshold_,
+                                                           selected_return_mode);
   }
   else if (model_ == "PandarQT") {
-    decoder_ = std::make_shared<pandar_qt::PandarQTDecoder>(calibration_, scan_phase_);
+    pandar_qt::PandarQTDecoder::ReturnMode selected_return_mode;
+    if (return_mode_ == "First")
+      selected_return_mode = pandar_qt::PandarQTDecoder::ReturnMode::FIRST;
+    else if (return_mode_ == "Last")
+      selected_return_mode = pandar_qt::PandarQTDecoder::ReturnMode::LAST;
+    else if (return_mode_ == "Dual")
+      selected_return_mode = pandar_qt::PandarQTDecoder::ReturnMode::DUAL;
+    else {
+      ROS_ERROR("Invalid return mode, defaulting to dual return mode"); 
+      selected_return_mode = pandar_qt::PandarQTDecoder::ReturnMode::DUAL;
+    }
+    decoder_ = std::make_shared<pandar_qt::PandarQTDecoder>(calibration_, scan_phase_,
+                                                            dual_return_distance_threshold_,
+                                                            selected_return_mode);
   }
   else {
     // TODO : Add other models
