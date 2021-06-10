@@ -111,13 +111,13 @@ void PandarCloud::onProcessScan(const pandar_msgs::msg::PandarScan::SharedPtr sc
           const auto pointcloud_raw = convertPointcloud(pointcloud);
           auto ros_pc_msg_ptr = std::make_unique<sensor_msgs::msg::PointCloud2>();
           pcl::toROSMsg(*pointcloud_raw, *ros_pc_msg_ptr);
-          ros_pc_msg_ptr->header.stamp = rclcpp::Time(toChronoNanoSeconds(first_point_timestamp).count()) - rclcpp::Duration::from_nanoseconds(0);
+          ros_pc_msg_ptr->header.stamp = rclcpp::Time(toChronoNanoSeconds(first_point_timestamp).count());
           pandar_points_pub_->publish(std::move(ros_pc_msg_ptr));
         }
         {
           auto ros_pc_msg_ptr = std::make_unique<sensor_msgs::msg::PointCloud2>();
           pcl::toROSMsg(*pointcloud, *ros_pc_msg_ptr);
-          ros_pc_msg_ptr->header.stamp = rclcpp::Time(toChronoNanoSeconds(first_point_timestamp).count()) - rclcpp::Duration::from_nanoseconds(0);
+          ros_pc_msg_ptr->header.stamp = rclcpp::Time(toChronoNanoSeconds(first_point_timestamp).count());
           pandar_points_ex_pub_->publish(std::move(ros_pc_msg_ptr));
         }
       }
