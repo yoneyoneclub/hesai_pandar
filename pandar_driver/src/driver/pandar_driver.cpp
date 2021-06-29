@@ -65,7 +65,7 @@ bool PandarDriver::poll(void)
         break;
       }
       else if (packet_type == -1) {
-        return false;
+        // return false;
       }
     }
 
