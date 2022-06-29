@@ -4,6 +4,7 @@
 #include "pandar_pointcloud/decoder/pandar40_decoder.hpp"
 #include "pandar_pointcloud/decoder/pandar_qt_decoder.hpp"
 #include "pandar_pointcloud/decoder/pandar_xt_decoder.hpp"
+#include "pandar_pointcloud/decoder/pandar_xtm_decoder.hpp"
 #include "pandar_pointcloud/decoder/pandar64_decoder.hpp"
 
 #include <chrono>
@@ -79,6 +80,29 @@ PandarCloud::PandarCloud(ros::NodeHandle node, ros::NodeHandle private_nh)
       selected_return_mode = pandar_xt::PandarXTDecoder::ReturnMode::DUAL;
     }
     decoder_ = std::make_shared<pandar_xt::PandarXTDecoder>(calibration_, scan_phase_,
+                                                            dual_return_distance_threshold_,
+                                                            selected_return_mode);
+  }
+  else if (model_ == "PandarXTM") {
+    pandar_xtm::PandarXTMDecoder::ReturnMode selected_return_mode;
+    if (return_mode_ == "First")
+      selected_return_mode = pandar_xtm::PandarXTMDecoder::ReturnMode::FIRST;
+    else if (return_mode_ == "Strongest")
+      selected_return_mode = pandar_xtm::PandarXTMDecoder::ReturnMode::STRONGEST;
+    else if (return_mode_ == "Last")
+      selected_return_mode = pandar_xtm::PandarXTMDecoder::ReturnMode::LAST;
+    else if (return_mode_ == "Dual")
+      selected_return_mode = pandar_xtm::PandarXTMDecoder::ReturnMode::DUAL;
+    else if (return_mode_ == "Triple") {
+      //selected_return_mode = pandar_xtm::PandarXTMDecoder::ReturnMode::TRIPLE;
+      ROS_ERROR("Triple return mode not implemented, defaulting to dual return mode");
+      selected_return_mode = pandar_xtm::PandarXTMDecoder::ReturnMode::DUAL;
+    }
+    else {
+      ROS_ERROR("Invalid return mode, defaulting to dual return mode");
+      selected_return_mode = pandar_xtm::PandarXTMDecoder::ReturnMode::DUAL;
+    }
+    decoder_ = std::make_shared<pandar_xtm::PandarXTMDecoder>(calibration_, scan_phase_,
                                                             dual_return_distance_threshold_,
                                                             selected_return_mode);
   }
