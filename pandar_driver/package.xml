@@ -16,6 +16,7 @@
   <depend>pluginlib</depend>
   <depend>pandar_msgs</depend>
   <depend>pandar_api</depend>
+  <depend>libpcap</depend>
   
   <export>
     <nodelet plugin="${prefix}/nodelet_pandar_driver.xml"/>

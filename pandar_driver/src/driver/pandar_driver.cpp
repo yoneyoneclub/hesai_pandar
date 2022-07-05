@@ -49,6 +49,10 @@ PandarDriver::PandarDriver(ros::NodeHandle node, ros::NodeHandle private_nh)
     azimuth_index_ = 12;  // 12 + 386 * [0-1]
     is_valid_packet_ = [](size_t packet_size) { return (packet_size == 812); };
   }
+  else if (model_ == "PandarXTM") {
+    azimuth_index_ = 12;  // 12 + 130 * [0-7]
+    is_valid_packet_ = [](size_t packet_size) { return (packet_size == 820); };
+  }
   else {
     ROS_ERROR("Invalid model name");
   }
