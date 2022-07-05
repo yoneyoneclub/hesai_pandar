@@ -114,29 +114,28 @@ void PandarXTMDecoder::CalcXTPointXYZIT(int blockid, \
 
     point.intensity = unit.intensity;
 
-    {
-      double unix_second = static_cast<double>(timegm(&packet_.t));  // sensor-time (ppt/gps)
-      point.time_stamp = unix_second + (static_cast<double>(packet_.usec)) / 1000000.0;
-      point.time_stamp += (static_cast<double>(blockXTMOffsetSingle[i] + laserXTMOffset[i]) / 1000000.0f);
+    double unix_second = static_cast<double>(timegm(&packet_.t));  // sensor-time (ppt/gps)
+    point.time_stamp = unix_second + (static_cast<double>(packet_.usec)) / 1000000.0;
+    point.time_stamp += (static_cast<double>(blockXTMOffsetSingle[i] + laserXTMOffset[i]) / 1000000.0f);
 
-      if (packet_.return_mode == 0x3d){
-        point.time_stamp =
-          point.time_stamp + (static_cast<double>(blockXTMOffsetTriple[blockid] +
-            laserXTMOffset[i]) /
-                             1000000.0f);
-      }
-      else if (packet_.return_mode == 0x39 || packet_.return_mode == 0x3b || packet_.return_mode == 0x3c) {
-        point.time_stamp =
-          point.time_stamp + (static_cast<double>(blockXTMOffsetDual[blockid] +
-            laserXTMOffset[i]) /
-                             1000000.0f);
-      } else {
-        point.time_stamp = point.time_stamp + \
-            (static_cast<double>(blockXTMOffsetSingle[blockid] + laserXTMOffset[i]) / \
-            1000000.0f);
-      }
+    if (packet_.return_mode == 0x3d){
+      point.time_stamp =
+        point.time_stamp + (static_cast<double>(blockXTMOffsetTriple[blockid] +
+          laserXTMOffset[i]) /
+                           1000000.0f);
+    }
+    else if (packet_.return_mode == 0x39 || packet_.return_mode == 0x3b || packet_.return_mode == 0x3c) {
+      point.time_stamp =
+        point.time_stamp + (static_cast<double>(blockXTMOffsetDual[blockid] +
+          laserXTMOffset[i]) /
+                           1000000.0f);
+    } else {
+      point.time_stamp = point.time_stamp + \
+          (static_cast<double>(blockXTMOffsetSingle[blockid] + laserXTMOffset[i]) / \
+          1000000.0f);
     }
 
+    point.return_type = packet_.return_mode;
     point.ring = i;
     cld->points.emplace_back(point);
   }
