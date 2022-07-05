@@ -15,48 +15,19 @@ namespace pandar_xtm
 {
 PandarXTMDecoder::PandarXTMDecoder(Calibration& calibration, float scan_phase, double dual_return_distance_threshold, ReturnMode return_mode)
 {
-  for(int unit = 0; unit < UNIT_NUM; ++unit){
-    firing_offset_[unit] = 2.856f * unit + 0.368f;
-  }
-
-  block_offset_single_ = {
-      5.632f - 50.0f * 5.0f,
-      5.632f - 50.0f * 4.0f,
-      5.632f - 50.0f * 3.0f,
-      5.632f - 50.0f * 2.0f,
-      5.632f - 50.0f * 1.0f,
-      5.632f - 50.0f * 0.0f,
-      5.632f - 50.0f * 0.0f,
-      5.632f - 50.0f * 0.0f
-  };
-  block_offset_dual_ = {
-      5.632f - 50.0f * 2.0f,
-      5.632f - 50.0f * 2.0f,
-      5.632f - 50.0f * 1.0f,
-      5.632f - 50.0f * 1.0f,
-      5.632f - 50.0f * 0.0f,
-      5.632f - 50.0f * 0.0f,
-      5.632f - 50.0f * 0.0f,
-      5.632f - 50.0f * 0.0f
-  };
-  block_offset_triple_ = {
-      5.632f - 50.0f * 1.0f,
-      5.632f - 50.0f * 1.0f,
-      5.632f - 50.0f * 1.0f,
-      5.632f - 50.0f * 0.0f,
-      5.632f - 50.0f * 0.0f,
-      5.632f - 50.0f * 0.0f,
-      5.632f - 50.0f * 0.0f,
-      5.632f - 50.0f * 0.0f
-  };
-
-  // TODO: add calibration data validation
-  // if(calibration.elev_angle_map.size() != num_lasers_){
-  //   // calibration data is not valid!
-  // }
+  m_sin_elevation_map_.resize(UNIT_NUM);
+  m_cos_elevation_map_.resize(UNIT_NUM);
   for (size_t laser = 0; laser < UNIT_NUM; ++laser) {
     elev_angle_[laser] = calibration.elev_angle_map[laser];
     azimuth_offset_[laser] = calibration.azimuth_offset_map[laser];
+    m_sin_elevation_map_[laser] = sinf(deg2rad(pandarXTM_elev_angle_map[laser]));
+    m_cos_elevation_map_[laser] = cosf(deg2rad(pandarXTM_elev_angle_map[laser]));
+  }
+  m_sin_azimuth_map_.resize(MAX_AZIMUTH_DEGREE_NUM);
+  m_cos_azimuth_map_.resize(MAX_AZIMUTH_DEGREE_NUM);
+  for(int i = 0; i < MAX_AZIMUTH_DEGREE_NUM; ++i) {
+    m_sin_azimuth_map_[i] = sinf(i * M_PI / 18000);
+    m_cos_azimuth_map_[i] = cosf(i * M_PI / 18000);
   }
 
   scan_phase_ = static_cast<uint16_t>(scan_phase * 100.0f);
@@ -84,48 +55,93 @@ void PandarXTMDecoder::unpack(const pandar_msgs::PandarPacket& raw_packet)
   if (!parsePacket(raw_packet)) {
     return;
   }
-
   if (has_scanned_) {
     scan_pc_ = overflow_pc_;
     overflow_pc_.reset(new pcl::PointCloud<PointXYZIRADT>);
     has_scanned_ = false;
   }
-
-  int step = 1;
-  switch (packet_.return_mode) {
-    case FIRST_RETURN:
-    case STRONGEST_RETURN:
-    case LAST_RETURN:
-      step = 1;
-      break;
-    case DUAL_RETURN:
-      step = 2;
-      break;
-    case TRIPLE_RETURN:
-      step = 3;
-      break;
+  for (int block_id = 0; block_id < packet_.header.chBlockNumber; ++block_id) {
+    int azimuthGap = 0; /* To do */
+    double timestampGap = 0; /* To do */
+    if(last_azimuth_ > packet_.blocks[block_id].azimuth) {
+      azimuthGap = static_cast<int>(packet_.blocks[block_id].azimuth) + (36000 - static_cast<int>(last_azimuth_));
+    } else {
+      azimuthGap = static_cast<int>(packet_.blocks[block_id].azimuth) - static_cast<int>(last_azimuth_);
+    }
+    timestampGap = packet_.usec - last_timestamp_ + 0.001;
+    if (last_azimuth_ != packet_.blocks[block_id].azimuth && \
+            (azimuthGap / timestampGap) < 36000 * 100 ) {
+      /* for all the blocks */
+      if ((last_azimuth_ > packet_.blocks[block_id].azimuth &&
+           start_angle_ <= packet_.blocks[block_id].azimuth) ||
+          (last_azimuth_ < start_angle_ &&
+           start_angle_ <= packet_.blocks[block_id].azimuth)) {
+          has_scanned_ = true;
+      }
+    } else {
+      //printf("last_azimuth_:%d pkt.blocks[block_id].azimuth:%d  *******azimuthGap:%d\n", last_azimuth_, pkt.blocks[block_id].azimuth, azimuthGap);
+    }
+    CalcXTPointXYZIT(block_id, packet_.header.chLaserNumber, scan_pc_);
+    last_azimuth_ = packet_.blocks[block_id].azimuth;
+    last_timestamp_ = packet_.usec;
   }
+}
 
-  for (int block_id = 0; block_id < BLOCK_NUM; block_id += step) {
-    PointcloudXYZIRADT block_pc;
-    if (step == 1) {
-      block_pc = convert(block_id);
+void PandarXTMDecoder::CalcXTPointXYZIT(int blockid, \
+    char chLaserNumber, boost::shared_ptr<pcl::PointCloud<PointXYZIRADT>> cld) {
+  Block *block = &packet_.blocks[blockid];
+
+  for (int i = 0; i < chLaserNumber; ++i) {
+    /* for all the units in a block */
+    Unit &unit = block->units[i];
+    PointXYZIRADT point{};
+
+    /* skip wrong points */
+    if (unit.distance <= 0.1 || unit.distance > 200.0) {
+      continue;
     }
-    if (step == 2) {
-      block_pc = convert_dual(block_id);
+
+    int azimuth = static_cast<int>(pandarXTM_horizontal_azimuth_offset_map[i] * 100 + block->azimuth);
+    if(azimuth < 0)
+      azimuth += 36000;
+    if(azimuth >= 36000)
+      azimuth -= 36000;
+
+
+    {
+      float xyDistance = unit.distance * m_cos_elevation_map_[i];
+      point.x = static_cast<float>(xyDistance * m_sin_azimuth_map_[azimuth]);
+      point.y = static_cast<float>(xyDistance * m_cos_azimuth_map_[azimuth]);
+      point.z = static_cast<float>(unit.distance * m_sin_elevation_map_[i]);
     }
-    if (step == 3) {
-      block_pc = convert_triple(block_id);
+
+    point.intensity = unit.intensity;
+
+    {
+      double unix_second = static_cast<double>(timegm(&packet_.t));  // sensor-time (ppt/gps)
+      point.time_stamp = unix_second + (static_cast<double>(packet_.usec)) / 1000000.0;
+      point.time_stamp += (static_cast<double>(blockXTMOffsetSingle[i] + laserXTMOffset[i]) / 1000000.0f);
+
+      if (packet_.return_mode == 0x3d){
+        point.time_stamp =
+          point.time_stamp + (static_cast<double>(blockXTMOffsetTriple[blockid] +
+            laserXTMOffset[i]) /
+                             1000000.0f);
+      }
+      else if (packet_.return_mode == 0x39 || packet_.return_mode == 0x3b || packet_.return_mode == 0x3c) {
+        point.time_stamp =
+          point.time_stamp + (static_cast<double>(blockXTMOffsetDual[blockid] +
+            laserXTMOffset[i]) /
+                             1000000.0f);
+      } else {
+        point.time_stamp = point.time_stamp + \
+            (static_cast<double>(blockXTMOffsetSingle[blockid] + laserXTMOffset[i]) / \
+            1000000.0f);
+      }
     }
-    int current_phase = (static_cast<int>(packet_.blocks[block_id].azimuth) - scan_phase_ + 36000) % 36000;
-    if (current_phase > last_phase_ && !has_scanned_) {
-      *scan_pc_ += *block_pc;
-    }
-    else {
-      *overflow_pc_ += *block_pc;
-      has_scanned_ = true;
-    }
-    last_phase_ = current_phase;
+
+    point.ring = i;
+    cld->points.emplace_back(point);
   }
 }
 
@@ -159,96 +175,13 @@ PointcloudXYZIRADT PandarXTMDecoder::convert(const int block_id)
 
     point.time_stamp = unix_second + (static_cast<double>(packet_.usec)) / 1000000.0;
 
-    point.time_stamp += (static_cast<double>(block_offset_single_[block_id] + firing_offset_[unit_id]) / 1000000.0f);
+    point.time_stamp += (static_cast<double>(blockXTMOffsetSingle[block_id] + laserXTMOffset[unit_id]) / 1000000.0f);
 
     block_pc->push_back(point);
   }
   return block_pc;
 }
 
-PointcloudXYZIRADT PandarXTMDecoder::convert_dual(const int block_id)
-{
-  PointcloudXYZIRADT block_pc(new pcl::PointCloud<PointXYZIRADT>);
-
-  // double unix_second = raw_packet.header.stamp.toSec() // system-time (packet receive time)
-  double unix_second = static_cast<double>(timegm(&packet_.t));  // sensor-time (ppt/gps)
-
-  auto head = block_id + ((return_mode_ == ReturnMode::FIRST) ? 1 : 0);
-  auto tail = block_id + ((return_mode_ == ReturnMode::LAST) ? 1 : 2);
-
-  for (size_t unit_id = 0; unit_id < UNIT_NUM; ++unit_id) {
-    for (int i = head; i < tail; ++i) {
-      PointXYZIRADT point;
-      const auto& block = packet_.blocks[i];
-      const auto& unit = block.units[unit_id];
-      // skip invalid points
-      if (unit.distance <= 0.1 || unit.distance > 200.0) {
-        continue;
-      }
-      double xyDistance = unit.distance * cosf(deg2rad(elev_angle_[unit_id]));
-
-      point.x = static_cast<float>(
-          xyDistance * sinf(deg2rad(azimuth_offset_[unit_id] + (static_cast<double>(block.azimuth)) / 100.0)));
-      point.y = static_cast<float>(
-          xyDistance * cosf(deg2rad(azimuth_offset_[unit_id] + (static_cast<double>(block.azimuth)) / 100.0)));
-      point.z = static_cast<float>(unit.distance * sinf(deg2rad(elev_angle_[unit_id])));
-
-      point.intensity = unit.intensity;
-      point.distance = unit.distance;
-      point.ring = unit_id;
-      point.azimuth = block.azimuth + round(azimuth_offset_[unit_id] * 100.0f);
-
-      point.time_stamp = unix_second + (static_cast<double>(packet_.usec)) / 1000000.0;
-
-      point.time_stamp += (static_cast<double>(block_offset_dual_[block_id] + firing_offset_[unit_id]) / 1000000.0f);
-
-      block_pc->push_back(point);
-    }
-  }
-  return block_pc;
-}
-
-PointcloudXYZIRADT PandarXTMDecoder::convert_triple(const int block_id)
-{
-  PointcloudXYZIRADT block_pc(new pcl::PointCloud<PointXYZIRADT>);
-
-  // double unix_second = raw_packet.header.stamp.toSec() // system-time (packet receive time)
-  double unix_second = static_cast<double>(timegm(&packet_.t));  // sensor-time (ppt/gps)
-
-  auto head = block_id + ((return_mode_ == ReturnMode::FIRST) ? 1 : 0);
-  auto tail = block_id + ((return_mode_ == ReturnMode::LAST) ? 1 : 2);
-
-  for (size_t unit_id = 0; unit_id < UNIT_NUM; ++unit_id) {
-    for (int i = head; i < tail; ++i) {
-      PointXYZIRADT point;
-      const auto& block = packet_.blocks[i];
-      const auto& unit = block.units[unit_id];
-      // skip invalid points
-      if (unit.distance <= 0.1 || unit.distance > 200.0) {
-        continue;
-      }
-      double xyDistance = unit.distance * cosf(deg2rad(elev_angle_[unit_id]));
-
-      point.x = static_cast<float>(
-          xyDistance * sinf(deg2rad(azimuth_offset_[unit_id] + (static_cast<double>(block.azimuth)) / 100.0)));
-      point.y = static_cast<float>(
-          xyDistance * cosf(deg2rad(azimuth_offset_[unit_id] + (static_cast<double>(block.azimuth)) / 100.0)));
-      point.z = static_cast<float>(unit.distance * sinf(deg2rad(elev_angle_[unit_id])));
-
-      point.intensity = unit.intensity;
-      point.distance = unit.distance;
-      point.ring = unit_id;
-      point.azimuth = block.azimuth + round(azimuth_offset_[unit_id] * 100.0f);
-
-      point.time_stamp = unix_second + (static_cast<double>(packet_.usec)) / 1000000.0;
-
-      point.time_stamp += (static_cast<double>(block_offset_triple_[block_id] + firing_offset_[unit_id]) / 1000000.0f);
-
-      block_pc->push_back(point);
-    }
-  }
-  return block_pc;
-}
 
 bool PandarXTMDecoder::parsePacket(const pandar_msgs::PandarPacket& raw_packet)
 {

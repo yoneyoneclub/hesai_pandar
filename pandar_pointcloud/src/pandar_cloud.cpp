@@ -32,7 +32,6 @@ PandarCloud::PandarCloud(ros::NodeHandle node, ros::NodeHandle private_nh)
     ROS_ERROR("Unable to load calibration data");
     return;
   }
-
   if (model_ == "Pandar40P" || model_ == "Pandar40M") {
     pandar40::Pandar40Decoder::ReturnMode selected_return_mode;
     if (return_mode_ == "Strongest")
@@ -102,9 +101,11 @@ PandarCloud::PandarCloud(ros::NodeHandle node, ros::NodeHandle private_nh)
       ROS_ERROR("Invalid return mode, defaulting to dual return mode");
       selected_return_mode = pandar_xtm::PandarXTMDecoder::ReturnMode::DUAL;
     }
+    ROS_INFO_STREAM("XTM Decoder");
     decoder_ = std::make_shared<pandar_xtm::PandarXTMDecoder>(calibration_, scan_phase_,
                                                             dual_return_distance_threshold_,
                                                             selected_return_mode);
+    ROS_INFO_STREAM("XTM Decoder OK");
   }
   else if (model_ == "Pandar64") {
     pandar64::Pandar64Decoder::ReturnMode selected_return_mode;
@@ -132,6 +133,7 @@ PandarCloud::PandarCloud(ros::NodeHandle node, ros::NodeHandle private_nh)
       node.subscribe("pandar_packets", 10, &PandarCloud::onProcessScan, this, ros::TransportHints().tcpNoDelay(true));
   pandar_points_pub_ = node.advertise<sensor_msgs::PointCloud2>("pandar_points", 10);
   pandar_points_ex_pub_ = node.advertise<sensor_msgs::PointCloud2>("pandar_points_ex", 10);
+  ROS_INFO_STREAM("Ready");
 }
 
 PandarCloud::~PandarCloud()
@@ -141,8 +143,10 @@ PandarCloud::~PandarCloud()
 bool PandarCloud::setupCalibration()
 {
   if (!calibration_path_.empty() && calibration_.loadFile(calibration_path_) == 0) {
+    ROS_INFO_STREAM("Loaded Calibration from:" << calibration_path_);
     return true;
   }
+  ROS_INFO_STREAM("Loading Calibration file from device...");
   if (tcp_client_) {
     std::string content("");
     for (size_t i = 0; i < TCP_RETRY_NUM; ++i) {

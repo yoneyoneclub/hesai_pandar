@@ -31,7 +31,7 @@ constexpr size_t SEQUENCE_SIZE = 4;
 constexpr size_t PACKET_TAIL_SIZE = 28;
 
 // All
-constexpr size_t PACKET_SIZE = HEAD_SIZE + BODY_SIZE + PACKET_TAIL_SIZE;
+constexpr size_t PACKET_SIZE = 820;
 
 // 0x33 - First Return      0x39 - Dual Return (Last, Strongest)
 // 0x37 - Strongest Return  0x3B - Dual Return (Last, First)
