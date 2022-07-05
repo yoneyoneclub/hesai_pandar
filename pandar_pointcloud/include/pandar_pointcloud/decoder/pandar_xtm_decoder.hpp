@@ -120,7 +120,6 @@ private:
   std::array<float, UNIT_NUM> elev_angle_;
   std::array<float, UNIT_NUM> azimuth_offset_;
 
-  std::array<float, UNIT_NUM> firing_offset_;
   std::array<float, BLOCK_NUM> block_offset_single_;
   std::array<float, BLOCK_NUM> block_offset_dual_;
   std::array<float, BLOCK_NUM> block_offset_triple_;
