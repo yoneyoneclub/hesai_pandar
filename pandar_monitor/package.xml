@@ -15,5 +15,6 @@
   <depend>roscpp</depend>
   <depend>std_msgs</depend>
   <depend>pandar_api</depend>
+  <depend>libcpprest-dev</depend>
 
 </package>
