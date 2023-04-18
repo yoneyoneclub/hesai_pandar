@@ -16,6 +16,7 @@
   <depend>boost</depend>
   <depend>std_msgs</depend>
   <depend>pandar_api</depend>
+  <depend>libcpprest-dev</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
