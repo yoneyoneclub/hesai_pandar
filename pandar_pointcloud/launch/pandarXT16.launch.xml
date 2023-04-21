@@ -10,7 +10,7 @@
     <arg name="dual_return_distance_threshold" default="0.1"/>
     <arg name="model" default="PandarXT-16"/>
     <arg name="frame_id" default="pandar"/>
-    <arg name="disable_rings" default="[9,10,11,12,13,14,15]"/>
+    <arg name="disable_rings" default="[0,1,2,3,4,5, 10,11,12, 13]"/>
     <arg name="calibration"  default="$(find-pkg-share pandar_pointcloud)/config/xt16.csv"/>
     <arg name="manager" default="pandar_nodelet_manager"/>
 

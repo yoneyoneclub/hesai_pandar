@@ -130,18 +130,22 @@ PandarCloud::PandarCloud(const rclcpp::NodeOptions & options)
       RCLCPP_WARN(get_logger(),"Invalid return mode, defaulting to dual return mode");
       selected_return_mode = pandar_xt16::PandarXT16Decoder::ReturnMode::DUAL;
     }
+    std::vector<long> disabled_rings;
     if (!disable_rings_.empty()) {
       std::string rings;
       for (const auto& ring: disable_rings_) {
-        rings += std::to_string(ring) + " ";
+        if (ring >= 0 ) {
+          rings += std::to_string(ring) + " ";
+          disabled_rings.emplace_back(ring);
+        }
       }
-      RCLCPP_INFO_STREAM(get_logger(), "Disabling: " << disable_rings_.size() << " rings.");
+      RCLCPP_INFO_STREAM(get_logger(), "Disabling: " << disabled_rings.size() << " ring(s).");
       RCLCPP_INFO_STREAM(get_logger(), "Disabling rings:" << rings);
       RCLCPP_INFO_STREAM(get_logger(), "Only valid ring values will be disabled.");
     }
     decoder_ = std::make_shared<pandar_xt16::PandarXT16Decoder>(*this, calibration_, scan_phase_,
                                                             dual_return_distance_threshold_,
-                                                            selected_return_mode, disable_rings_);
+                                                            selected_return_mode, disabled_rings);
   }
   else {
     // TODO : Add other models
