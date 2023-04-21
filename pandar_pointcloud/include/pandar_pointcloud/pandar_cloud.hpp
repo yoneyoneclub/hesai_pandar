@@ -32,6 +32,7 @@ private:
   double scan_phase_;
   std::vector<double> angle_range_;
   std::vector<double> distance_range_;
+  std::vector<long> disable_rings_;
 
   rclcpp::Subscription<pandar_msgs::msg::PandarScan>::SharedPtr pandar_packet_sub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr pandar_points_pub_;

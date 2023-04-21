@@ -1,11 +1,11 @@
 #pragma once
 /**
- * Pandar XT-32
+ * Pandar XT-16
  */
 #include <cstdint>
 namespace pandar_pointcloud
 {
-namespace pandar_xt
+namespace pandar_xt16
 {
 
 
@@ -16,7 +16,7 @@ constexpr size_t HEADER_SIZE = 6;
 // Body
 constexpr size_t BLOCK_NUM = 8;
 constexpr size_t BLOCK_HEADER_AZIMUTH = 2;
-constexpr size_t UNIT_NUM = 32;
+constexpr size_t UNIT_NUM = 16;
 constexpr size_t UNIT_SIZE = 4;
 constexpr size_t BLOCK_SIZE = UNIT_SIZE * UNIT_NUM + BLOCK_HEADER_AZIMUTH;
 constexpr size_t BODY_SIZE = BLOCK_SIZE * BLOCK_NUM;

@@ -61,6 +61,11 @@ PandarDriverCore::PandarDriverCore(rclcpp::Node *node)
     azimuth_index_ = 12;  // 12 + 386 * [0-1]
     is_valid_packet_ = [](size_t packet_size) { return (packet_size == 812); };
   }
+  else  if (model_ == "PandarXT-16") {
+    RCLCPP_INFO_STREAM(node->get_logger(), "PandarXT16");
+    azimuth_index_ = 12;
+    is_valid_packet_ = [](size_t packet_size) { return (packet_size == 568); };
+  }
   else {
     RCLCPP_ERROR(node->get_logger(), "Invalid model name");
   }

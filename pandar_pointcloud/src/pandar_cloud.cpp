@@ -3,7 +3,8 @@
 #include "pandar_pointcloud/calibration.hpp"
 #include "pandar_pointcloud/decoder/pandar40_decoder.hpp"
 #include "pandar_pointcloud/decoder/pandar_qt_decoder.hpp"
-#include "pandar_pointcloud/decoder/pandar_xt_decoder.hpp"
+#include "pandar_pointcloud/decoder/pandar_xt32_decoder.hpp"
+#include "pandar_pointcloud/decoder/pandar_xt16_decoder.hpp"
 #include "pandar_pointcloud/decoder/pandar64_decoder.hpp"
 
 #include <pcl_conversions/pcl_conversions.h>
@@ -42,6 +43,10 @@ PandarCloud::PandarCloud(const rclcpp::NodeOptions & options)
     RCLCPP_WARN(get_logger(), "Unable to load calibration data");
     return;
   }
+  disable_rings_ = declare_parameter("disable_rings", std::vector<long>{});
+  if(!disable_rings_.empty() && model_ != "PandarXT-16") {
+    RCLCPP_WARN(get_logger(), "Disable Rings function is only available for the Pandar XT-16");
+  }
 
   if (model_ == "Pandar40P" || model_ == "Pandar40M") {
     pandar40::Pandar40Decoder::ReturnMode selected_return_mode;
@@ -78,20 +83,20 @@ PandarCloud::PandarCloud(const rclcpp::NodeOptions & options)
                                                             selected_return_mode);
   }
   else if (model_ == "PandarXT-32") {
-    pandar_xt::PandarXTDecoder::ReturnMode selected_return_mode;
+    pandar_xt32::PandarXT32Decoder::ReturnMode selected_return_mode;
     if (return_mode_ == "First")
-      selected_return_mode = pandar_xt::PandarXTDecoder::ReturnMode::FIRST;
+      selected_return_mode = pandar_xt32::PandarXT32Decoder::ReturnMode::FIRST;
     else if (return_mode_ == "STRONGEST")
-      selected_return_mode = pandar_xt::PandarXTDecoder::ReturnMode::STRONGEST;
+      selected_return_mode = pandar_xt32::PandarXT32Decoder::ReturnMode::STRONGEST;
     else if (return_mode_ == "Last")
-      selected_return_mode = pandar_xt::PandarXTDecoder::ReturnMode::LAST;
+      selected_return_mode = pandar_xt32::PandarXT32Decoder::ReturnMode::LAST;
     else if (return_mode_ == "Dual")
-      selected_return_mode = pandar_xt::PandarXTDecoder::ReturnMode::DUAL;
+      selected_return_mode = pandar_xt32::PandarXT32Decoder::ReturnMode::DUAL;
     else {
       RCLCPP_WARN(get_logger(),"Invalid return mode, defaulting to dual return mode"); 
-      selected_return_mode = pandar_xt::PandarXTDecoder::ReturnMode::DUAL;
+      selected_return_mode = pandar_xt32::PandarXT32Decoder::ReturnMode::DUAL;
     }
-    decoder_ = std::make_shared<pandar_xt::PandarXTDecoder>(*this, calibration_, scan_phase_,
+    decoder_ = std::make_shared<pandar_xt32::PandarXT32Decoder>(*this, calibration_, scan_phase_,
                                                             dual_return_distance_threshold_,
                                                             selected_return_mode);
   }
@@ -110,6 +115,33 @@ PandarCloud::PandarCloud(const rclcpp::NodeOptions & options)
     decoder_ = std::make_shared<pandar64::Pandar64Decoder>(*this, calibration_, scan_phase_,
                                                             dual_return_distance_threshold_,
                                                             selected_return_mode);
+  }
+  else if (model_ == "PandarXT-16") {
+    pandar_xt16::PandarXT16Decoder::ReturnMode selected_return_mode;
+    if (return_mode_ == "First")
+      selected_return_mode = pandar_xt16::PandarXT16Decoder::ReturnMode::FIRST;
+    else if (return_mode_ == "STRONGEST")
+      selected_return_mode = pandar_xt16::PandarXT16Decoder::ReturnMode::STRONGEST;
+    else if (return_mode_ == "Last")
+      selected_return_mode = pandar_xt16::PandarXT16Decoder::ReturnMode::LAST;
+    else if (return_mode_ == "Dual")
+      selected_return_mode = pandar_xt16::PandarXT16Decoder::ReturnMode::DUAL;
+    else {
+      RCLCPP_WARN(get_logger(),"Invalid return mode, defaulting to dual return mode");
+      selected_return_mode = pandar_xt16::PandarXT16Decoder::ReturnMode::DUAL;
+    }
+    if (!disable_rings_.empty()) {
+      std::string rings;
+      for (const auto& ring: disable_rings_) {
+        rings += std::to_string(ring) + " ";
+      }
+      RCLCPP_INFO_STREAM(get_logger(), "Disabling: " << disable_rings_.size() << " rings.");
+      RCLCPP_INFO_STREAM(get_logger(), "Disabling rings:" << rings);
+      RCLCPP_INFO_STREAM(get_logger(), "Only valid ring values will be disabled.");
+    }
+    decoder_ = std::make_shared<pandar_xt16::PandarXT16Decoder>(*this, calibration_, scan_phase_,
+                                                            dual_return_distance_threshold_,
+                                                            selected_return_mode, disable_rings_);
   }
   else {
     // TODO : Add other models
@@ -164,7 +196,6 @@ void PandarCloud::onProcessScan(const pandar_msgs::msg::PandarScan::SharedPtr sc
   pandar_msgs::msg::PandarPacket pkt;
 
   for (auto& packet : scan_msg->packets) {
-    // RCLCPP_WARN(get_logger(), "-------- unpack ----------");
     decoder_->unpack(packet);
     if (decoder_->hasScanned()) {
       pointcloud = decoder_->getPointcloud();
@@ -179,7 +210,6 @@ void PandarCloud::onProcessScan(const pandar_msgs::msg::PandarScan::SharedPtr sc
           pandar_points_pub_->publish(std::move(ros_pc_msg_ptr));
         }
         {
-          // RCLCPP_WARN(get_logger(),"========== publish %ld points. ==========", pointcloud->points.size());
           auto ros_pc_msg_ptr = std::make_unique<sensor_msgs::msg::PointCloud2>();
           pcl::toROSMsg(*pointcloud, *ros_pc_msg_ptr);
           ros_pc_msg_ptr->header.stamp = rclcpp::Time(toChronoNanoSeconds(first_point_timestamp).count());

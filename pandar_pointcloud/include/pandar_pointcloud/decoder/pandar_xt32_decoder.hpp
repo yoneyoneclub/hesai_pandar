@@ -4,13 +4,13 @@
 #include <rclcpp/rclcpp.hpp>
 #include "pandar_pointcloud/calibration.hpp"
 #include "packet_decoder.hpp"
-#include "pandar_xt.hpp"
+#include "pandar_xt32.hpp"
 
 namespace pandar_pointcloud
 {
-namespace pandar_xt
+namespace pandar_xt32
 {
-class PandarXTDecoder : public PacketDecoder
+class PandarXT32Decoder : public PacketDecoder
 {
 public:
   enum class ReturnMode : int8_t
@@ -21,7 +21,7 @@ public:
     LAST,
   };
 
-  PandarXTDecoder(rclcpp::Node & node, Calibration& calibration, float scan_phase = 0.0f, double dual_return_distance_threshold = 0.1, ReturnMode return_mode = ReturnMode::DUAL);
+  PandarXT32Decoder(rclcpp::Node & node, Calibration& calibration, float scan_phase = 0.0f, double dual_return_distance_threshold = 0.1, ReturnMode return_mode = ReturnMode::DUAL);
   void unpack(const pandar_msgs::msg::PandarPacket& raw_packet) override;
   bool hasScanned() override;
   PointcloudXYZIRADT getPointcloud() override;

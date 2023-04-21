@@ -1,5 +1,5 @@
-#include "pandar_pointcloud/decoder/pandar_xt_decoder.hpp"
-#include "pandar_pointcloud/decoder/pandar_xt.hpp"
+#include "pandar_pointcloud/decoder/pandar_xt16_decoder.hpp"
+#include "pandar_pointcloud/decoder/pandar_xt16.hpp"
 
 namespace
 {
@@ -11,9 +11,9 @@ static inline double deg2rad(double degrees)
 
 namespace pandar_pointcloud
 {
-namespace pandar_xt
+namespace pandar_xt16
 {
-PandarXTDecoder::PandarXTDecoder(rclcpp::Node & node, Calibration& calibration, float scan_phase, double dual_return_distance_threshold, ReturnMode return_mode)
+PandarXT16Decoder::PandarXT16Decoder(rclcpp::Node & node, Calibration& calibration, float scan_phase, double dual_return_distance_threshold, ReturnMode return_mode, const std::vector<long>& disable_rings)
 : logger_(node.get_logger()), clock_(node.get_clock())
 {
   for(size_t unit = 0; unit < UNIT_NUM; ++unit){
@@ -39,22 +39,23 @@ PandarXTDecoder::PandarXTDecoder(rclcpp::Node & node, Calibration& calibration, 
 
   last_phase_ = 0;
   has_scanned_ = false;
+  disable_rings_ = disable_rings;
 
   scan_pc_.reset(new pcl::PointCloud<PointXYZIRADT>);
   overflow_pc_.reset(new pcl::PointCloud<PointXYZIRADT>);
 }
 
-bool PandarXTDecoder::hasScanned()
+bool PandarXT16Decoder::hasScanned()
 {
   return has_scanned_;
 }
 
-PointcloudXYZIRADT PandarXTDecoder::getPointcloud()
+PointcloudXYZIRADT PandarXT16Decoder::getPointcloud()
 {
   return scan_pc_;
 }
 
-void PandarXTDecoder::unpack(const pandar_msgs::msg::PandarPacket& raw_packet)
+void PandarXT16Decoder::unpack(const pandar_msgs::msg::PandarPacket& raw_packet)
 {
   if (!parsePacket(raw_packet)) {
     return;
@@ -84,7 +85,7 @@ void PandarXTDecoder::unpack(const pandar_msgs::msg::PandarPacket& raw_packet)
   return;
 }
 
-PointcloudXYZIRADT PandarXTDecoder::convert(const int block_id)
+PointcloudXYZIRADT PandarXT16Decoder::convert(const int block_id)
 {
   PointcloudXYZIRADT block_pc(new pcl::PointCloud<PointXYZIRADT>);
 
@@ -93,6 +94,10 @@ PointcloudXYZIRADT PandarXTDecoder::convert(const int block_id)
 
   const auto& block = packet_.blocks[block_id];
   for (size_t unit_id = 0; unit_id < UNIT_NUM; ++unit_id) {
+    if ( !disable_rings_.empty()
+    && std::find(disable_rings_.begin(), disable_rings_.end(), unit_id) != disable_rings_.end() ) {
+      continue;
+    }
     PointXYZIRADT point;
     const auto& unit = block.units[unit_id];
     // skip invalid points
@@ -121,17 +126,20 @@ PointcloudXYZIRADT PandarXTDecoder::convert(const int block_id)
   return block_pc;
 }
 
-PointcloudXYZIRADT PandarXTDecoder::convert_dual(const int block_id)
+PointcloudXYZIRADT PandarXT16Decoder::convert_dual(const int block_id)
 {
   PointcloudXYZIRADT block_pc(new pcl::PointCloud<PointXYZIRADT>);
 
-  // double unix_second = raw_packet.header.stamp.toSec() // system-time (packet receive time)
   double unix_second = static_cast<double>(timegm(&packet_.t));  // sensor-time (ppt/gps)
 
   auto head = block_id + ((return_mode_ == ReturnMode::FIRST) ? 1 : 0);
   auto tail = block_id + ((return_mode_ == ReturnMode::LAST) ? 1 : 2);
 
   for (size_t unit_id = 0; unit_id < UNIT_NUM; ++unit_id) {
+    if ( !disable_rings_.empty()
+         && std::find(disable_rings_.begin(), disable_rings_.end(), unit_id) != disable_rings_.end() ) {
+      continue;
+    }
     for (int i = head; i < tail; ++i) {
       PointXYZIRADT point;
       const auto& block = packet_.blocks[i];
@@ -163,7 +171,7 @@ PointcloudXYZIRADT PandarXTDecoder::convert_dual(const int block_id)
   return block_pc;
 }
 
-bool PandarXTDecoder::parsePacket(const pandar_msgs::msg::PandarPacket& raw_packet)
+bool PandarXT16Decoder::parsePacket(const pandar_msgs::msg::PandarPacket& raw_packet)
 {
   if (raw_packet.size != PACKET_SIZE) {
     return false;
