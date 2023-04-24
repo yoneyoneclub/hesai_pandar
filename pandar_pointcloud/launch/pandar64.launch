@@ -23,7 +23,7 @@
     <remap from="pandar_points_ex" to="pointcloud_raw_ex" />
     <param name="scan_phase" value="$(var scan_phase)"/>
     <param name="return_mode" value="$(var return_mode)"/>
-    <param name="dual_return_distance_threshold"  value="$(var dual_return_distance_threshold)"/>
+    <param name="dual_return_distance_threshold" value="$(var dual_return_distance_threshold)"/>
     <param name="model" value="$(var model)"/>
     <param name="frame_id" value="$(var frame_id)"/>
     <param name="device_ip" value="$(var device_ip)"/>

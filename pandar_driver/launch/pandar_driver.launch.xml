@@ -9,12 +9,12 @@
 
 
   <node pkg="pandar_driver" exec="pandar_driver_node" name="pandar_driver" output="screen" >
-    <param name="pcap" type="string" value="$(var pcap)"/>
-    <param name="device_ip" type="string" value="$(var device_ip)"/>
-    <param name="lidar_port"  type="int" value="$(var lidar_port)"/>
-    <param name="gps_port"  type="int" value="$(var gps_port)"/>
-    <param name="scan_phase"  type="double" value="$(var scan_phase)"/>
-    <param name="model"  type="string" value="$(var model)"/>
-    <param name="frame_id"  type="string" value="$(var frame_id)"/>
+    <param name="pcap" value="$(var pcap)"/>
+    <param name="device_ip" value="$(var device_ip)"/>
+    <param name="lidar_port" value="$(var lidar_port)"/>
+    <param name="gps_port" value="$(var gps_port)"/>
+    <param name="scan_phase" type="double" value="$(var scan_phase)"/>
+    <param name="model" value="$(var model)"/>
+    <param name="frame_id" value="$(var frame_id)"/>
   </node>
 </launch>

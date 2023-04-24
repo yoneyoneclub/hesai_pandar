@@ -5,5 +5,5 @@
   <node pkg="pandar_monitor" exec="pandar_monitor_node" name="pandar_monitor" output="log" respawn="true">
     <param from="$(var pandar_monitor_param_file)" />
     <param name="ip_address" value="$(var ip_address)" />
-  </node>/>
+  </node>
 </launch>
