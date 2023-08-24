@@ -10,6 +10,7 @@
   <arg name="dual_return_distance_threshold" default="0.1"/>
   <arg name="model" default="PandarQT"/>
   <arg name="frame_id" default="pandar"/>
+  <arg name="disable_rings" default="[-1]"/>
   <arg name="calibration" default="$(find-pkg-share pandar_pointcloud)/config/qt.csv"/>
 
   <!-- pandar driver -->
@@ -33,6 +34,6 @@
     <param name="model" value="$(var model)"/>
     <param name="device_ip" value="$(var device_ip)"/>
     <param name="calibration" value="$(var calibration)"/>
-  </node>
+    <param name="disable_rings" value="$(var disable_rings)"/>
   </node>
 </launch>

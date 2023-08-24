@@ -35,7 +35,8 @@ public:
                   const std::vector<double> &angle_range,
                   const std::vector<double> &distance_range,
                   double dual_return_distance_threshold = 0.1,
-                  ReturnMode return_mode = ReturnMode::DUAL);
+                  ReturnMode return_mode = ReturnMode::DUAL,
+                  const std::vector<long>& disable_rings = {});
   void unpack(const pandar_msgs::msg::PandarPacket& raw_packet) override;
   PointXYZIRADT build_point(int block_id, int unit_id, uint8_t return_type);
   bool hasScanned() override;
@@ -60,6 +61,7 @@ private:
   std::array<float, UNIT_NUM> firing_offset_;
   std::array<float, BLOCK_NUM> block_offset_single_;
   std::array<float, BLOCK_NUM> block_offset_dual_;
+  std::vector<long> disable_rings_;
 
   std::vector<int> angle_range_;
   std::vector<double> distance_range_;

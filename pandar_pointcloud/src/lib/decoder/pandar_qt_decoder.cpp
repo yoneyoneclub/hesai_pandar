@@ -16,7 +16,8 @@ namespace pandar_qt
 PandarQTDecoder::PandarQTDecoder(rclcpp::Node &node, Calibration &calibration, double scan_phase,
                                  const std::vector<double> &angle_range,
                                  const std::vector<double> &distance_range,
-                                 double dual_return_distance_threshold, ReturnMode return_mode)
+                                 double dual_return_distance_threshold, ReturnMode return_mode,
+                                 const std::vector<long>& disable_rings)
 : logger_(node.get_logger()), clock_(node.get_clock())
 {
   firing_offset_ = {
@@ -73,6 +74,7 @@ PandarQTDecoder::PandarQTDecoder(rclcpp::Node &node, Calibration &calibration, d
   last_phase_ = 0;
   has_scanned_ = false;
   reset_scan_ = false;
+  disable_rings_ = disable_rings;
 
   scan_pc_.reset(new pcl::PointCloud<PointXYZIRADT>);
   overflow_pc_.reset(new pcl::PointCloud<PointXYZIRADT>);
@@ -177,6 +179,10 @@ PointcloudXYZIRADT PandarQTDecoder::convert(const int block_id)
 
   const auto& block = packet_.blocks[block_id];
   for (size_t unit_id = 0; unit_id < UNIT_NUM; ++unit_id) {
+    if ( !disable_rings_.empty()
+         && std::find(disable_rings_.begin(), disable_rings_.end(), unit_id) != disable_rings_.end() ) {
+      continue;
+    }
     const auto& unit = block.units[unit_id];
     // skip invalid points
     if (unit.distance <= distance_range_[0] || unit.distance > distance_range_[1]) {
@@ -202,7 +208,10 @@ PointcloudXYZIRADT PandarQTDecoder::convert_dual(const int block_id)
   const auto& odd_block = packet_.blocks[odd_block_id];
 
   for (size_t unit_id = 0; unit_id < UNIT_NUM; ++unit_id) {
-
+    if ( !disable_rings_.empty()
+         && std::find(disable_rings_.begin(), disable_rings_.end(), unit_id) != disable_rings_.end() ) {
+      continue;
+    }
     const auto& even_unit = even_block.units[unit_id];
     const auto& odd_unit = odd_block.units[unit_id];
 
