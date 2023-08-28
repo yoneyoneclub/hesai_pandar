@@ -23,8 +23,8 @@ int main(int argc, char ** argv)
   ros::init(argc, argv, "pandar_monitor");
 
   PandarMonitor monitor;
-
-  ros::spin();
+  
+  monitor.checkGPSTime();
 
   return 0;
 }

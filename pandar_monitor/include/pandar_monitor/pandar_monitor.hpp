@@ -30,6 +30,8 @@ class PandarMonitor
 public:
   PandarMonitor();
 
+  void checkGPSTime();
+
 protected:
   using DiagStatus = diagnostic_msgs::DiagnosticStatus;
 
@@ -63,6 +65,7 @@ protected:
   float temp_hot_error_;
   float rpm_ratio_warn_;
   float rpm_ratio_error_;
+  double  gps_time_chk_us_;
 
 
   const std::map<int, const char *> rpm_dict_ = {

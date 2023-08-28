@@ -18,6 +18,7 @@
 #include "pandar_monitor/pandar_monitor.hpp"
 #include <boost/algorithm/string/join.hpp>
 #include <fmt/format.h>
+#include <sensor_msgs/Imu.h>
 
 PandarMonitor::PandarMonitor()
 {
@@ -29,10 +30,12 @@ PandarMonitor::PandarMonitor()
   pnh_.param<float>("temp_hot_error", temp_hot_error_, 80.0);
   pnh_.param<float>("rpm_ratio_warn", rpm_ratio_warn_, 0.80);
   pnh_.param<float>("rpm_ratio_error", rpm_ratio_error_, 0.70);
+  pnh_.param<double>("gps_time_chk_us", gps_time_chk_us_, 500000);
 
   updater_.add("pandar_connection", this, &PandarMonitor::checkConnection);
   updater_.add("pandar_temperature", this, &PandarMonitor::checkTemperature);
   updater_.add("pandar_ptp", this, &PandarMonitor::checkPTP);
+
 
   client_ = std::make_unique<pandar_api::TCPClient>(ip_address_, static_cast<int>(timeout_ * 1000));
 
@@ -109,6 +112,38 @@ void PandarMonitor::checkPTP(diagnostic_updater::DiagnosticStatusWrapper & stat)
     level = DiagStatus::WARN;
   }
   stat.summary(level, ptp_[status.ptp_clock_status]);
+}
+
+void PandarMonitor::checkGPSTime()
+{
+  pandar_api::LidarStatus status;
+  std::string gps_pps_message_str;
+  unsigned char gps_pps_level;
+  sensor_msgs::Imu gps_pps_chk;
+  sensor_msgs::Imu gps_gprmc_chk;
+
+  ros::Publisher gps_pps_chk_pub = pnh_.advertise<sensor_msgs::Imu>("gps_pps_chk", 10);
+  ros::Publisher gps_gprmc_chk_pub = pnh_.advertise<sensor_msgs::Imu>("gps_gprmc_chk", 10);
+
+  while (ros::ok())
+  {
+    /* get LiDAR status*/
+    auto code = client_->getLidarStatus(status);
+    if (code == pandar_api::TCPClient::ReturnCode::SUCCESS)
+    {
+      if(status.gps_pps_lock == 1)
+      {
+        gps_pps_chk.header.stamp = ros::Time::now();
+        gps_pps_chk_pub.publish(gps_pps_chk);
+      }
+      if(status.gps_gprmc_status == 1)
+      {
+        gps_gprmc_chk.header.stamp = ros::Time::now();
+        gps_gprmc_chk_pub.publish(gps_gprmc_chk);
+      }
+    }
+    usleep(gps_time_chk_us_);
+  }
 }
 
 void PandarMonitor::onTimer(const ros::TimerEvent & event) { updater_.force_update(); }
