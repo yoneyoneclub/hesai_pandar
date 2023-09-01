@@ -92,16 +92,10 @@ protected:
     "frozen",
   };
 
-  const char *gps_pps_message_[3] = {
+  const char *gps_message_[3] = {
     "unlocked",
     "locked",
-    "ERROR"
-  };
-
-  const char *gps_gprmc_message_[3] = {
-    "NG",
-    "OK",
-    "ERROR"
+    "warning"
   };
 };
 

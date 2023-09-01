@@ -124,15 +124,15 @@ void PandarMonitor::checkGPSPPS(diagnostic_updater::DiagnosticStatusWrapper & st
   {
     if(status.gps_pps_lock == 0)
     {
-      stat.summary(DiagStatus::ERROR, "unlocked");
+      stat.summary(DiagStatus::ERROR, gps_message_[0]);
     }
     else if(status.gps_pps_lock == 1)
     {
-      stat.summary(DiagStatus::OK, "locked");
+      stat.summary(DiagStatus::OK, gps_message_[1]);
     }
     else
     {
-      stat.summary(DiagStatus::WARN, "warnig");
+      stat.summary(DiagStatus::WARN, gps_message_[2]);
     }
   }
 }
@@ -146,15 +146,15 @@ void PandarMonitor::checkGPSGPRMC(diagnostic_updater::DiagnosticStatusWrapper & 
   {
     if(status.gps_gprmc_status == 0)
     {
-      stat.summary(DiagStatus::ERROR, "unlocked");
+      stat.summary(DiagStatus::ERROR, gps_message_[0]);
     }
     else if(status.gps_gprmc_status == 1)
     {
-      stat.summary(DiagStatus::OK, "locked");
+      stat.summary(DiagStatus::OK, gps_message_[1]);
     }
     else
     {
-      stat.summary(DiagStatus::WARN, "warnig");
+      stat.summary(DiagStatus::WARN, gps_message_[2]);
     }
   }
 }
