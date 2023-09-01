@@ -30,8 +30,6 @@ class PandarMonitor
 public:
   PandarMonitor();
 
-  void checkGPSTime();
-
 protected:
   using DiagStatus = diagnostic_msgs::DiagnosticStatus;
 
@@ -42,6 +40,12 @@ protected:
     diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   void checkPTP(
+    diagnostic_updater::DiagnosticStatusWrapper & stat);
+
+  void checkGPSPPS(
+    diagnostic_updater::DiagnosticStatusWrapper & stat);
+
+  void checkGPSGPRMC(
     diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   void onTimer(const ros::TimerEvent & event);
@@ -65,7 +69,6 @@ protected:
   float temp_hot_error_;
   float rpm_ratio_warn_;
   float rpm_ratio_error_;
-  double  gps_time_chk_us_;
 
 
   const std::map<int, const char *> rpm_dict_ = {
@@ -87,6 +90,18 @@ protected:
     "tracking",
     "locked",
     "frozen",
+  };
+
+  const char *gps_pps_message_[3] = {
+    "unlocked",
+    "locked",
+    "ERROR"
+  };
+
+  const char *gps_gprmc_message_[3] = {
+    "NG",
+    "OK",
+    "ERROR"
   };
 };
 
